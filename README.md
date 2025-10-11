@@ -6,9 +6,16 @@ It covers self-supervised, supervised, and reinforcement learning training loops
 ## 🔍 Objectives
 
 * Implement tiny transformer architectures from scratch
-* Build training loops for:
-    * Self-supervised learning
+* Build training loops:
+    * Self-supervised learning 
+        * [ ] Causal Language Modeling
     * Supervised learning
+        * [ ] Instruction Fine-tuning
+        * [ ] Direct Preference Optimization
     * Reinforcement learning
+        * [ ] Proximal Policy Optimization
+        * [ ] Group Relative Policy Optimization
 
 ## 📰 News
+
+## 🚀 Models Trained 
