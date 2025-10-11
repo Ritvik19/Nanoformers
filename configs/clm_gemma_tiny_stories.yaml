@@ -1,0 +1,19 @@
+env_path: "../../../.env"
+model_path: "google/gemma-3-270m"
+dataset_path: "../../../data/tiny_stories.jsonl"
+output_dir: "../../../models/clm_gemma_tiny_stories"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "clm_gemma_tiny_stories"
+
+# Training settings
+batch_size: 16
+gradient_accumulation_steps: 1
+num_epochs: 2
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 1024
+device: "cuda"
+load_weights: true
+bos_token_id: 2
