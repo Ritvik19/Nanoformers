@@ -1,0 +1,17 @@
+env_path: "../../../.env"
+model_path: "unsloth/gemma-3-270m-it"
+dataset_path: "../../../data/gsm8k.jsonl"
+output_dir: "../../../models/ift_gemma_gsm8k"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "ift_gemma_gsm8k"
+
+# Training settings
+batch_size: 8
+gradient_accumulation_steps: 1
+num_epochs: 5
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 1024
+device: "cuda"
