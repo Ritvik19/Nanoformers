@@ -2,8 +2,6 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 
-# token masking
-
 def tokenize_function(example, tokenizer):
     text = tokenizer.apply_chat_template(example["messages"], tokenize=False)
     input_ids = tokenizer(text, return_special_tokens_mask=False, add_special_tokens=False)['input_ids']
@@ -35,7 +33,7 @@ def group_texts(batch, block_size, tokenizer):
         "target_ids": target_ids,
     }
 
-class CLMDataset(Dataset):
+class IFTDataset(Dataset):
     def __init__(self, hf_dataset, tokenizer):
         self.ds = hf_dataset
         self.tokenizer = tokenizer

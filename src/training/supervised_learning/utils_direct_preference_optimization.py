@@ -58,7 +58,7 @@ def group_texts(batch, block_size, tokenizer):
         "rejected_target_ids": rejected_target_ids,
     }
     
-class CLMDataset(Dataset):
+class DPODataset(Dataset):
     def __init__(self, hf_dataset, tokenizer):
         self.ds = hf_dataset
         self.tokenizer = tokenizer

@@ -16,7 +16,7 @@ from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from src.utils.parse_config import parse_args
-from utils_instruction_fine_tuning import tokenize_function, group_texts, CLMDataset, collate_fn
+from utils_instruction_fine_tuning import tokenize_function, group_texts, IFTDataset, collate_fn
 
 def load_model_and_tokenizer(args):
     print("Loading model and tokenizer...")
@@ -44,10 +44,10 @@ def load_and_prepare_dataset(args, tokenizer):
     
     print("Grouping texts into blocks...")
     max_length = args["max_length"] 
-    train_ds = CLMDataset(split["train"].map(
+    train_ds = IFTDataset(split["train"].map(
         lambda x: group_texts(x, block_size=max_length, tokenizer=tokenizer),  batched=True, num_proc=256
     ), tokenizer=tokenizer)
-    eval_ds = CLMDataset(split["test"].map(
+    eval_ds = IFTDataset(split["test"].map(
         lambda x: group_texts(x, block_size=max_length, tokenizer=tokenizer),  batched=True, num_proc=256
     ), tokenizer=tokenizer)
     print(train_ds)
