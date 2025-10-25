@@ -16,7 +16,7 @@ def tokenize_function(example, tokenizer):
     }
     return tokens
 
-def group_texts(batch, block_size, stride, tokenizer):
+def group_texts(batch, block_size, tokenizer):
     input_ids = []
     target_ids = []
     for token_ids, prompt_length in zip(batch["input_ids"], batch["prompt_length"]):

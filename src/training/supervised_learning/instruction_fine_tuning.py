@@ -45,10 +45,10 @@ def load_and_prepare_dataset(args, tokenizer):
     print("Grouping texts into blocks...")
     max_length = args["max_length"] 
     train_ds = CLMDataset(split["train"].map(
-        lambda x: group_texts(x, block_size=max_length, stride=max_length//2, tokenizer=tokenizer),  batched=True, num_proc=256
+        lambda x: group_texts(x, block_size=max_length, tokenizer=tokenizer),  batched=True, num_proc=256
     ), tokenizer=tokenizer)
     eval_ds = CLMDataset(split["test"].map(
-        lambda x: group_texts(x, block_size=max_length, stride=max_length//2, tokenizer=tokenizer),  batched=True, num_proc=256
+        lambda x: group_texts(x, block_size=max_length, tokenizer=tokenizer),  batched=True, num_proc=256
     ), tokenizer=tokenizer)
     print(train_ds)
     print(eval_ds)
