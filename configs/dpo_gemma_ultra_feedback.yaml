@@ -1,0 +1,18 @@
+env_path: "../../../.env"
+model_path: "unsloth/gemma-3-270m-it"
+dataset_path: "../../../data/ultrafeedback_binarized_preferences_cleaned.jsonl"
+output_dir: "../../../models/dpo_gemma_ultra_feedback"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "dpo_gemma_ultra_feedback"
+
+# Training settings
+batch_size: 4
+gradient_accumulation_steps: 1
+num_epochs: 5
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 1024
+dpo_beta: 0.1
+device: "cuda"
