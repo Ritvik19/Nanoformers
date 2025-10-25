@@ -48,6 +48,24 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | [unsloth/gemma-3-270m-it](https://huggingface.co/unsloth/gemma-3-270m-it) | [openai/gsm8k](https://huggingface.co/datasets/openai/gsm8k) | Instruction Fine-Tuning | [ift_gemma_gsm8k.yaml](configs/ift_gemma_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/klfnahkm?nw=nwuserritvik19) |
 | [unsloth/gemma-3-270m-it](https://huggingface.co/unsloth/gemma-3-270m-it) | [argilla/ultrafeedback-binarized-preferences-cleaned](https://huggingface.co/datasets/argilla/ultrafeedback-binarized-preferences-cleaned) | Direct Preference Optimization | [dpo_gemma_ultrafeedback.yaml](configs/dpo_gemma_ultrafeedback.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/bd4dlvqf?nw=nwuserritvik19) |
 
+## 🗂️ Dataset Schemas
+
+### Causal Language Modeling (CLM)
+- `text`: string
+
+### Instruction Fine-Tuning (IFT)
+- `messages`: list of dicts  
+  Each dict typically contains:
+  - `role`: "system" | "user" | "assistant"
+  - `content`: string
+
+### Direct Preference Optimization (DPO)
+- `prompt`: list of dicts
+- `chosen`: list of dicts
+- `rejected`: list of dicts  
+  *(same format as IFT: each dict has `role` and `content`)*
+
+
 ## ⚡ Getting Started
 
 ### Cloning
