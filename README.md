@@ -34,9 +34,11 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### 2025-10-24
 - Removed stride parameter from `group_texts` function for consistency in Instruction Fine-Tuning
 
-### 2025-10-25
-- Added training scripts for Direct Preference Optimization  
-- Trained `unsloth/gemma-3-270m-it` on `argilla/ultrafeedback-binarized-preferences-cleaned` dataset
+### 2026-03-23
+- Fixed 4 bugs in training scripts across CLM, IFT, and DPO
+- Resolved critical `NameError` in `utils_causal_language_modeling.py` (missing `for` clause in target_chunk list comprehension)
+- Added `test_size` guards in `instruction_fine_tuning.py` and `direct_preference_optimization.py` to prevent `test_size=0` crashes
+- Ensured `model.train()` is called after evaluation in all training loops
 
 ---
 

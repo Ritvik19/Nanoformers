@@ -17,7 +17,7 @@ def group_texts(batch, block_size, stride, tokenizer, bos_token_id):
 
             input_chunk = [bos_token_id] + input_chunk    
             target_chunk = input_chunk.copy()
-            target_chunk = [token_id if token_id != tokenizer.pad_token_id else -100]
+            target_chunk = [token_id if token_id != tokenizer.pad_token_id else -100 for token_id in target_chunk]
             input_ids.append(input_chunk)
             target_ids.append(target_chunk)
     return {

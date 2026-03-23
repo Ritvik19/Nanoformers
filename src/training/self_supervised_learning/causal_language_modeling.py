@@ -168,6 +168,7 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
         ckpt_path = os.path.join(output_dir, f"epoch_{epoch+1}")
         model.save_pretrained(ckpt_path)
         tokenizer.save_pretrained(ckpt_path)
+        model.train()  # Switch back to training mode for next epoch
     
     wandb.finish()
     print("Training finished.")

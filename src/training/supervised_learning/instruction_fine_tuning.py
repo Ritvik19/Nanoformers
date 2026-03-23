@@ -40,6 +40,7 @@ def load_and_prepare_dataset(args, tokenizer):
     
     print("Splitting dataset...")
     test_size = len(lm_datasets)%1000
+    test_size = test_size if test_size >= 500 else test_size + 1000
     split = lm_datasets.train_test_split(test_size=test_size)
     
     print("Grouping texts into blocks...")
@@ -163,6 +164,7 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
         ckpt_path = os.path.join(output_dir, f"epoch_{epoch+1}")
         model.save_pretrained(ckpt_path)
         tokenizer.save_pretrained(ckpt_path)
+        model.train()  # Switch back to training mode for next epoch
     
     wandb.finish()
     print("Training finished.")
