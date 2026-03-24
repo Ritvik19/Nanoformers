@@ -36,8 +36,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 ### 2026-03-23
 - Fixed 4 bugs in training scripts across CLM, IFT, and DPO
-- Resolved critical `NameError` in `utils_causal_language_modeling.py` (missing `for` clause in target_chunk list comprehension)
-- Added `test_size` guards in `instruction_fine_tuning.py` and `direct_preference_optimization.py` to prevent `test_size=0` crashes
+- Resolved critical `NameError` in the CLM dataset utilities (missing `for` clause in target token masking)
+- Added `test_size` guards in the IFT and DPO pipelines to prevent `test_size=0` crashes
 - Ensured `model.train()` is called after evaluation in all training loops
 
 ---
@@ -92,20 +92,17 @@ pip install -r requirements.txt
 #### Causal Language Modeling (CLM)
 
 ```bash
-python src/training/self_supervised_learning/causal_language_modeling.py \
-  --config configs/clm_gemma_tiny_stories.yaml
+python src/cli/train_clm.py --config configs/clm_gemma_tiny_stories.yaml
 ```
 
 #### Instruction Fine-Tuning (IFT)
 
 ```bash
-python src/training/supervised_learning/instruction_fine_tuning.py \
-  --config configs/ift_gemma_gsm8k.yaml
+python src/cli/train_ift.py --config configs/ift_gemma_gsm8k.yaml
 ```
 
 #### Direct Preference Optimization (DPO)
 
 ```bash
-python src/training/supervised_learning/direct_preference_optimization.py \
-  --config configs/dpo_gemma_ultra_feedback.yaml
+python src/cli/train_dpo.py --config configs/dpo_gemma_ultra_feedback.yaml
 ```
