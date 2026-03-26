@@ -1,0 +1,17 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "data/gsm8k_onpolicy_ift.jsonl"
+output_dir: "models/ift_qwen_gsm8k"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "ift_qwen_gsm8k"
+
+# Training settings
+batch_size: 8
+gradient_accumulation_steps: 1
+num_epochs: 25
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 1024
+device: "cuda"

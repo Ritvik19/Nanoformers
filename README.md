@@ -10,13 +10,17 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - Implement tiny transformer architectures from scratch  
 - Build training loops for:
   - **Self-Supervised Learning**
-    - [x] Causal Language Modeling
+    - [ ] Causal Language Modeling
   - **Supervised Learning**
     - [x] Instruction Fine-Tuning
-    - [x] Direct Preference Optimization
+    - [ ] Direct Preference Optimization
   - **Reinforcement Learning**
     - [ ] Proximal Policy Optimization
     - [ ] Group Relative Policy Optimization
+  - **Contrastive Learning**
+    - [ ] Contrastive Loss
+    - [ ] Triplet Loss
+    - [ ] InfoNCE Loss
 
 ---
 
@@ -36,9 +40,12 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 ### 2026-03-23
 - Fixed 4 bugs in training scripts across CLM, IFT, and DPO
-- Resolved critical `NameError` in `utils_causal_language_modeling.py` (missing `for` clause in target_chunk list comprehension)
-- Added `test_size` guards in `instruction_fine_tuning.py` and `direct_preference_optimization.py` to prevent `test_size=0` crashes
+- Resolved critical `NameError` in the CLM dataset utilities (missing `for` clause in target token masking)
+- Added `test_size` guards in the IFT and DPO pipelines to prevent `test_size=0` crashes
 - Ensured `model.train()` is called after evaluation in all training loops
+
+### 2026-03-26
+- Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 5% lift in pass@1 accuracy (average of 4).
 
 ---
 
@@ -46,9 +53,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 | Model | Dataset | Task | Configuration | Logs |
 |-------|----------|------|----------------|------|
-| [google/gemma-3-270m](https://huggingface.co/google/gemma-3-270m) | [roneneldan/TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) | Causal Language Modeling | [clm_gemma_tiny_stories.yaml](configs/clm_gemma_tiny_stories.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/1vy7mhf1?nw=nwuserritvik19) |
-| [unsloth/gemma-3-270m-it](https://huggingface.co/unsloth/gemma-3-270m-it) | [openai/gsm8k](https://huggingface.co/datasets/openai/gsm8k) | Instruction Fine-Tuning | [ift_gemma_gsm8k.yaml](configs/ift_gemma_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/klfnahkm?nw=nwuserritvik19) |
-| [unsloth/gemma-3-270m-it](https://huggingface.co/unsloth/gemma-3-270m-it) | [argilla/ultrafeedback-binarized-preferences-cleaned](https://huggingface.co/datasets/argilla/ultrafeedback-binarized-preferences-cleaned) | Direct Preference Optimization | [dpo_gemma_ultrafeedback.yaml](configs/dpo_gemma_ultrafeedback.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/bd4dlvqf?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `openai/gsm8k | Instruction Fine-Tuning | [ift_gemma_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
+
 
 ## 🗂️ Dataset Schemas
 
@@ -92,20 +98,17 @@ pip install -r requirements.txt
 #### Causal Language Modeling (CLM)
 
 ```bash
-python src/training/self_supervised_learning/causal_language_modeling.py \
-  --config configs/clm_gemma_tiny_stories.yaml
+python src/cli/train_clm.py --config configs/clm_gemma_tiny_stories.yaml
 ```
 
 #### Instruction Fine-Tuning (IFT)
 
 ```bash
-python src/training/supervised_learning/instruction_fine_tuning.py \
-  --config configs/ift_gemma_gsm8k.yaml
+python src/cli/train_ift.py --config configs/ift_gemma_gsm8k.yaml
 ```
 
 #### Direct Preference Optimization (DPO)
 
 ```bash
-python src/training/supervised_learning/direct_preference_optimization.py \
-  --config configs/dpo_gemma_ultra_feedback.yaml
+python src/cli/train_dpo.py --config configs/dpo_gemma_ultra_feedback.yaml
 ```

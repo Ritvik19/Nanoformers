@@ -1,7 +1,7 @@
-env_path: "../../../.env"
+env_path: ".env"
 model_path: "google/gemma-3-270m"
-dataset_path: "../../../data/tiny_stories.jsonl"
-output_dir: "../../../models/clm_gemma_tiny_stories"
+dataset_path: "data/tiny_stories.jsonl"
+output_dir: "models/clm_gemma_tiny_stories"
 
 # WandB settings
 wandb_project: "nanoformers"

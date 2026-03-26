@@ -1,0 +1,18 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "data/gsm8k_onpolicy_dpo.jsonl"
+output_dir: "models/dpo_qwen_gsm8k"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "dpo_qwen_gsm8k"
+
+# Training settings
+batch_size: 4
+gradient_accumulation_steps: 1
+num_epochs: 10
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 1024
+dpo_beta: 0.1
+device: "cuda"
