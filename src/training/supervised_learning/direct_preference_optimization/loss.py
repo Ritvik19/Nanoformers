@@ -3,6 +3,13 @@ import torch.nn.functional as F
 
 
 def per_example_sum_logprob(log_probs, labels):
+    # Causal LM alignment:
+    # logits/log_probs at position t predict the token at position t+1.
+    # HF `model(..., labels=...)` handles this shift internally, but here we
+    # compute token logprobs manually, so we must shift ourselves.
+    log_probs = log_probs[:, :-1, :]
+    labels = labels[:, 1:]
+
     sequence_length = log_probs.size(1)
     labels = labels[:, :sequence_length]
 
