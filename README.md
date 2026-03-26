@@ -110,5 +110,5 @@ python src/cli/train_ift.py --config configs/ift_gemma_gsm8k.yaml
 #### Direct Preference Optimization (DPO)
 
 ```bash
-python src/cli/train_dpo.py --config configs/dpo_gemma_ultra_feedback.yaml
+python src/cli/train_dpo.py --config configs/dpo_qwen_gsm8k.yaml
 ```
