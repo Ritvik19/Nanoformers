@@ -53,7 +53,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 | Model | Dataset | Task | Configuration | Logs |
 |-------|----------|------|----------------|------|
-| `Qwen/Qwen3-0.6B` | `openai/gsm8k | Instruction Fine-Tuning | [ift_gemma_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `openai/gsm8k` | Instruction Fine-Tuning | [ift_gemma_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas
