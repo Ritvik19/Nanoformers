@@ -14,7 +14,7 @@ from src.training.common.optim import (
 from src.training.common.trainer import build_dataloaders
 from src.training.common.utils import (
     compute_test_size,
-    load_json_dataset,
+    load_hf_dataset,
     move_batch_to_device,
 )
 from src.training.self_supervised_learning.causal_language_modeling.collator import (
@@ -44,7 +44,7 @@ def load_model_and_tokenizer(args):
 
 def load_and_prepare_dataset(args, tokenizer):
     print("Loading and preparing dataset...")
-    raw_dataset = load_json_dataset(args["dataset_path"])
+    raw_dataset = load_hf_dataset(args["dataset_path"])
 
     print("Tokenizing dataset...")
     tokenized_dataset = raw_dataset.map(

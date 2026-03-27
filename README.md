@@ -47,13 +47,16 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### 2026-03-26
 - Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 5% lift in pass@1 accuracy (average of 4).
 
+### 2026-03-27
+- Updated all training pipelines to natively support datasets from the Hugging Face Hub (via `datasets.load_dataset`) alongside local files.
+
 ---
 
 ## 🚀 Models Trained
 
 | Model | Dataset | Task | Configuration | Logs |
 |-------|----------|------|----------------|------|
-| `Qwen/Qwen3-0.6B` | `openai/gsm8k` | Instruction Fine-Tuning | [ift_gemma_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-ift` | Instruction Fine-Tuning | [ift_qwen_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas
