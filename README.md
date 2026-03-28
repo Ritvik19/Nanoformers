@@ -13,7 +13,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
     - [ ] Causal Language Modeling
   - **Supervised Learning**
     - [x] Instruction Fine-Tuning
-    - [ ] Direct Preference Optimization
+    - [x] Direct Preference Optimization
   - **Reinforcement Learning**
     - [ ] Proximal Policy Optimization
     - [ ] Group Relative Policy Optimization
@@ -50,6 +50,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### 2026-03-27
 - Updated all training pipelines to natively support datasets from the Hugging Face Hub (via `datasets.load_dataset`) alongside local files.
 
+### 2026-03-28
+- Verified the DPO loss implementation step by step and added comprehensive documentation.
+- Refined DPO training configuration with optimized parameters. Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 10% lift in pass@1 accuracy (average of 4).
+
 ---
 
 ## 🚀 Models Trained
@@ -57,6 +61,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | Model | Dataset | Task | Configuration | Logs |
 |-------|----------|------|----------------|------|
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-ift` | Instruction Fine-Tuning | [ift_qwen_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-dpo-dedup` | Direct Preference Optimization | [dpo_qwen_gsm8k.yaml](configs/dpo_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/3hsxkyfp?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas

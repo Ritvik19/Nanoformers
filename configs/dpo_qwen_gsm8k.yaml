@@ -1,6 +1,6 @@
 env_path: ".env"
 model_path: "Qwen/Qwen3-0.6B"
-dataset_path: "Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-dpo"
+dataset_path: "Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-dpo-dedup"
 output_dir: "models/dpo_qwen_gsm8k"
 
 # WandB settings
@@ -10,9 +10,9 @@ wandb_run_name: "dpo_qwen_gsm8k"
 # Training settings
 batch_size: 4
 gradient_accumulation_steps: 1
-num_epochs: 10
-learning_rate: 5e-6
+num_epochs: 15
+learning_rate: 1e-7
 lr_scheduler_type: "cosine"
 max_length: 1024
-dpo_beta: 0.1
+dpo_beta: 0.001
 device: "cuda"
