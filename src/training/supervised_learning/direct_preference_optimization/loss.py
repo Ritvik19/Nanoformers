@@ -21,6 +21,17 @@ def per_example_sum_logprob(log_probs, labels):
 
 
 def forward_loss(model, ref_model, batch, beta):
+    # Standard DPO objective for one preference pair (x, y_w, y_l):
+    #   L_DPO = -log sigma(beta * [
+    #       (log pi_theta(y_w | x) - log pi_theta(y_l | x))
+    #       - (log pi_ref(y_w | x) - log pi_ref(y_l | x))
+    #   ])
+    #
+    # In the code below:
+    # - "chosen" is y_w (the preferred completion)
+    # - "rejected" is y_l (the dispreferred completion)
+    # - per_example_sum_logprob(...) gives the sequence log-probability term
+    #   log pi(... | x) by summing token log-probs over the target completion.
     with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
         chosen_logits = model(
             input_ids=batch["chosen_input_ids"],
@@ -45,11 +56,18 @@ def forward_loss(model, ref_model, batch, beta):
                 return_dict=True,
             ).logits
 
+        # Convert token logits into log-probabilities so we can recover the
+        # sequence-level log pi(y | x) terms that appear in the DPO equation.
         chosen_log_probs = F.log_softmax(chosen_logits, dim=-1)
         rejected_log_probs = F.log_softmax(rejected_logits, dim=-1)
         ref_chosen_log_probs = F.log_softmax(ref_chosen_logits, dim=-1)
         ref_rejected_log_probs = F.log_softmax(ref_rejected_logits, dim=-1)
 
+        # These are the four log-probability terms from the equation:
+        #   pi_chosen       -> log pi_theta(y_w | x)
+        #   pi_rejected     -> log pi_theta(y_l | x)
+        #   ref_pi_chosen   -> log pi_ref(y_w | x)
+        #   ref_pi_rejected -> log pi_ref(y_l | x)
         pi_chosen = per_example_sum_logprob(chosen_log_probs, batch["chosen_target_ids"])
         pi_rejected = per_example_sum_logprob(
             rejected_log_probs, batch["rejected_target_ids"]
@@ -61,7 +79,16 @@ def forward_loss(model, ref_model, batch, beta):
             ref_rejected_log_probs, batch["rejected_target_ids"]
         )
 
+        # This is the bracketed term inside the sigmoid:
+        #   (log pi_theta(y_w | x) - log pi_theta(y_l | x))
+        #   - (log pi_ref(y_w | x) - log pi_ref(y_l | x))
+        # DPO encourages this value to be positive, meaning the policy prefers
+        # the chosen response more strongly than the reference does.
         advantage = (pi_chosen - pi_rejected) - (ref_pi_chosen - ref_pi_rejected)
+
+        # Final loss:
+        #   -log sigma(beta * advantage)
+        # beta controls how sharply we push the policy toward the preference.
         loss = -F.logsigmoid(beta * advantage).mean()
 
     return loss, advantage, pi_chosen - pi_rejected
