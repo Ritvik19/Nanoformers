@@ -54,6 +54,9 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - Verified the DPO loss implementation step by step and added comprehensive documentation.
 - Refined DPO training configuration with optimized parameters. Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 10% lift in pass@1 accuracy (average of 4).
 
+### 2026-03-29
+- Implemented manual causal language modeling loss calculation for Instruction Fine-Tuning.
+
 ---
 
 ## 🚀 Models Trained
