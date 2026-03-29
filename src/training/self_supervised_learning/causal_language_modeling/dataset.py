@@ -13,6 +13,7 @@ def tokenize_function(example, tokenizer):
 def group_texts(batch, block_size, stride, tokenizer, bos_token_id):
     input_ids = []
     target_ids = []
+    should_prepend_bos = bos_token_id not in (None, "None")
     for token_ids in batch["input_ids"]:
         for index in range(0, len(token_ids) - 1, stride):
             input_chunk = token_ids[index : index + block_size]
@@ -20,7 +21,8 @@ def group_texts(batch, block_size, stride, tokenizer, bos_token_id):
                 delta_input = block_size - len(input_chunk)
                 input_chunk = input_chunk + [tokenizer.pad_token_id] * delta_input
 
-            input_chunk = [bos_token_id] + input_chunk
+            if should_prepend_bos:
+                input_chunk = [bos_token_id] + input_chunk
             target_chunk = input_chunk.copy()
             target_chunk = [
                 token_id if token_id != tokenizer.pad_token_id else -100
