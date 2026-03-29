@@ -36,7 +36,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-ift` | Instruction Fine-Tuning | [ift_qwen_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-dpo` | Direct Preference Optimization | [dpo_qwen_gsm8k.yaml](configs/dpo_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/3hsxkyfp?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B-Base` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-cpt` | Causal Language Modeling | [clm_qwen_gsm8k.yaml](configs/clm_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/twq18n69) |
-| `distilbert/distilbert-base-uncased` | `dair-ai/emotion` | Sequence Classification | [seqclf_distilbert_emotion.yaml](configs/seqclf_distilbert_emotion.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6wlqge7k?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/dair-ai-emotion` | Sequence Classification | [seqclf_distilbert_emotion.yaml](configs/seqclf_distilbert_emotion.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6wlqge7k?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/conll-2003-ner` | Token Classification | [tokclf_distilbert_conll2003.yaml](configs/tokclf_distilbert_conll2003.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/hrpxlrfe?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas
@@ -107,7 +108,7 @@ python -m src.cli.train_dpo --config configs/dpo_qwen_gsm8k.yaml
 #### Sequence Classification
 
 ```bash
-python -m src.cli.train_classification --config configs/seqclf_distilbert_emotion.yaml
+python -m src.cli.train_sequence_classification --config configs/seqclf_distilbert_emotion.yaml
 ```
 
 #### Token Classification
@@ -157,5 +158,6 @@ python -m src.cli.train_token_classification --config configs/tokclf_distilbert_
 - Added a sequence classification training module with dataset preprocessing, evaluation accuracy, and a CLI/config example.
 - Trained `distilbert/distilbert-base-uncased` on `dair-ai/emotion` dataset resulting in 93.8% accuracy.
 - Added a token classification training module with subword label alignment, masked token accuracy, and a CLI/config example.
+- Trained `distilbert/distilbert-base-uncased` on `conll-2003` dataset resulting in 90.0% accuracy and 90.0% F1 score.
 
 ---

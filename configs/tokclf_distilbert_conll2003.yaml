@@ -1,6 +1,6 @@
 env_path: ".env"
 model_path: "distilbert/distilbert-base-uncased"
-dataset_path: "conll2003"
+dataset_path: "Ritvik19/conll-2003-ner"
 output_dir: "models/tokclf_distilbert_conll2003"
 
 # Dataset settings
@@ -11,7 +11,7 @@ wandb_project: "nanoformers"
 wandb_run_name: "tokclf_distilbert_conll2003"
 
 # Training settings
-batch_size: 32
+batch_size: 128
 gradient_accumulation_steps: 1
 num_epochs: 3
 learning_rate: 2e-5
