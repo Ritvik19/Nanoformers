@@ -10,7 +10,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - Implement tiny transformer architectures from scratch  
 - Build training loops for:
   - **Self-Supervised Learning**
-    - [ ] Causal Language Modeling
+    - [x] Causal Language Modeling
   - **Supervised Learning**
     - [x] Instruction Fine-Tuning
     - [x] Direct Preference Optimization
