@@ -101,7 +101,6 @@ def load_model(args, label_to_id, id_to_label):
         args["model_path"],
         args["device"],
         num_labels=len(label_to_id),
-        load_weights=args.get("load_weights", True),
     )
     model.config.label2id = {str(label): index for label, index in label_to_id.items()}
     model.config.id2label = id_to_label
@@ -132,7 +131,6 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
             "num_epochs": args["num_epochs"],
             "learning_rate": args["learning_rate"],
             "max_length": args["max_length"],
-            "load_weights": args.get("load_weights", True),
         },
     )
 

@@ -8,7 +8,7 @@ wandb_project: "nanoformers"
 wandb_run_name: "seqclf_distilbert_dair-ai-emotion"
 
 # Training settings
-batch_size: 16
+batch_size: 128
 gradient_accumulation_steps: 1
 num_epochs: 3
 learning_rate: 2e-5
