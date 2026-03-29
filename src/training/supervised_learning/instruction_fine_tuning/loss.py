@@ -9,7 +9,7 @@ def forward_loss(model, batch):
     #   L_IFT(x, y; theta)
     #     = -(1 / |y|) * sum_{t=1}^{|y|} log pi_theta(y_t | x, y_<t)
     #
-    # In this codebase, `batch["labels"]` already encodes the set of supervised
+    # The `batch["labels"]` already encodes the set of supervised
     # positions M by placing:
     # - the assistant response tokens at their target ids
     # - prompt tokens and padding tokens at -100
