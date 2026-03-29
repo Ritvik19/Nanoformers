@@ -2,6 +2,7 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoModelForSequenceClassification,
+    AutoModelForTokenClassification,
     AutoTokenizer,
 )
 
@@ -21,6 +22,16 @@ def load_causal_lm_model(model_path, device, load_weights=True):
 
 def load_sequence_classification_model(model_path, device, num_labels):
     model = AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        num_labels=num_labels,
+        ignore_mismatched_sizes=True,
+    )
+    model.to(device)
+    return model
+
+
+def load_token_classification_model(model_path, device, num_labels):
+    model = AutoModelForTokenClassification.from_pretrained(
         model_path,
         num_labels=num_labels,
         ignore_mismatched_sizes=True,
