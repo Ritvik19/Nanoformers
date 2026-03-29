@@ -56,6 +56,9 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 ### 2026-03-29
 - Implemented manual causal language modeling loss calculation for Instruction Fine-Tuning.
+- Implemented manual causal language modeling loss computation in the Causal Language Modeling pipeline.
+- Made BOS token prepending optional in Causal Language Modeling dataset processing based on `bos_token_id` configuration.
+- Trained `Qwen/Qwen3-0.6B-Base` on `openai/gsm8k` dataset distilled from `Qwen/Qwen3-0.6B` resulting in 20% lift in zero shot pass@1 accuracy (average of 4).
 
 ---
 
@@ -65,6 +68,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 |-------|----------|------|----------------|------|
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-ift` | Instruction Fine-Tuning | [ift_qwen_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-dpo-dedup` | Direct Preference Optimization | [dpo_qwen_gsm8k.yaml](configs/dpo_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/3hsxkyfp?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B-Base` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-cpt` | Causal Language Modeling | [clm_qwen_gsm8k.yaml](configs/clm_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/twq18n69) |
 
 
 ## 🗂️ Dataset Schemas
