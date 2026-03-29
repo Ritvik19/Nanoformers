@@ -17,7 +17,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Span Corruption | Encoder-Decoder | ⬜️ |
 | **Supervised** | Instruction Fine-Tuning | Decoder-only | ✅ |
 | | Direct Preference Optimization | Decoder-only | ✅ |
-| | Sequence Classification | Encoder-only | ⬜️ |
+| | Sequence Classification | Encoder-only | ✅ |
 | | Token Classification | Encoder-only | ⬜️ |
 | | Extractive Question Answering | Encoder-only | ⬜️ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
@@ -36,6 +36,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-ift` | Instruction Fine-Tuning | [ift_qwen_gsm8k.yaml](configs/ift_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6njm3m9q?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-dpo` | Direct Preference Optimization | [dpo_qwen_gsm8k.yaml](configs/dpo_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/3hsxkyfp?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B-Base` | `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-cpt` | Causal Language Modeling | [clm_qwen_gsm8k.yaml](configs/clm_qwen_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/twq18n69) |
+| `distilbert/distilbert-base-uncased` | `dair-ai/emotion` | Sequence Classification | [seqclf_distilbert_emotion.yaml](configs/seqclf_distilbert_emotion.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6wlqge7k?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas
@@ -54,6 +55,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - `chosen`: list of dicts
 - `rejected`: list of dicts  
   *(same format as IFT: each dict has `role` and `content`)*
+
+### Sequence Classification
+- `text`: string
+- `label`: integer or string
 
 
 ## ⚡ Getting Started
@@ -94,6 +99,12 @@ python -m src.cli.train_ift --config configs/ift_qwen_gsm8k.yaml
 ```bash
 python -m src.cli.train_dpo --config configs/dpo_qwen_gsm8k.yaml
 ```
+
+#### Sequence Classification
+
+```bash
+python -m src.cli.train_classification --config configs/seqclf_distilbert_emotion.yaml
+```
 --- 
 
 ## 📰 Update Log
@@ -131,5 +142,9 @@ python -m src.cli.train_dpo --config configs/dpo_qwen_gsm8k.yaml
 - Implemented manual causal language modeling loss computation in the Causal Language Modeling pipeline.
 - Made BOS token prepending optional in Causal Language Modeling dataset processing based on `bos_token_id` configuration.
 - Trained `Qwen/Qwen3-0.6B-Base` on `openai/gsm8k` dataset distilled from `Qwen/Qwen3-0.6B` resulting in 20% lift in zero shot pass@1 accuracy (average of 4).
+
+### 2026-03-30
+- Added a sequence classification training module with dataset preprocessing, evaluation accuracy, and a CLI/config example.
+- Trained `distilbert/distilbert-base-uncased` on `dair-ai/emotion` dataset resulting in 93.8% accuracy.
 
 ---
