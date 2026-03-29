@@ -1,4 +1,9 @@
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+)
 
 
 def load_tokenizer(model_path):
@@ -10,6 +15,16 @@ def load_causal_lm_model(model_path, device, load_weights=True):
         model = AutoModelForCausalLM.from_pretrained(model_path)
     else:
         model = AutoModelForCausalLM.from_config(AutoConfig.from_pretrained(model_path))
+    model.to(device)
+    return model
+
+
+def load_sequence_classification_model(model_path, device, num_labels):
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        num_labels=num_labels,
+        ignore_mismatched_sizes=True,
+    )
     model.to(device)
     return model
 

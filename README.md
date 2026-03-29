@@ -17,7 +17,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Span Corruption | Encoder-Decoder | ⬜️ |
 | **Supervised** | Instruction Fine-Tuning | Decoder-only | ✅ |
 | | Direct Preference Optimization | Decoder-only | ✅ |
-| | Sequence Classification | Encoder-only | ⬜️ |
+| | Sequence Classification | Encoder-only | ✅ |
 | | Token Classification | Encoder-only | ⬜️ |
 | | Extractive Question Answering | Encoder-only | ⬜️ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
@@ -54,6 +54,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - `chosen`: list of dicts
 - `rejected`: list of dicts  
   *(same format as IFT: each dict has `role` and `content`)*
+
+### Sequence Classification
+- `text`: string
+- `label`: integer or string
 
 
 ## ⚡ Getting Started
@@ -93,6 +97,12 @@ python -m src.cli.train_ift --config configs/ift_qwen_gsm8k.yaml
 
 ```bash
 python -m src.cli.train_dpo --config configs/dpo_qwen_gsm8k.yaml
+```
+
+#### Sequence Classification
+
+```bash
+python -m src.cli.train_classification --config configs/seqclf_distilbert_emotion.yaml
 ```
 --- 
 
