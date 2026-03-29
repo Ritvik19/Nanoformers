@@ -18,7 +18,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | **Supervised** | Instruction Fine-Tuning | Decoder-only | ✅ |
 | | Direct Preference Optimization | Decoder-only | ✅ |
 | | Sequence Classification | Encoder-only | ✅ |
-| | Token Classification | Encoder-only | ⬜️ |
+| | Token Classification | Encoder-only | ✅ |
 | | Extractive Question Answering | Encoder-only | ⬜️ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
 | **Reinforcement** | Proximal Policy Optimization | Decoder-only | ⬜️ |
@@ -59,6 +59,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### Sequence Classification
 - `text`: string
 - `label`: integer or string
+
+### Token Classification
+- `tokens`: list of strings
+- `labels`: list of integers or strings aligned with `tokens`
 
 
 ## ⚡ Getting Started
@@ -105,6 +109,12 @@ python -m src.cli.train_dpo --config configs/dpo_qwen_gsm8k.yaml
 ```bash
 python -m src.cli.train_classification --config configs/seqclf_distilbert_emotion.yaml
 ```
+
+#### Token Classification
+
+```bash
+python -m src.cli.train_token_classification --config configs/tokclf_distilbert_conll2003.yaml
+```
 --- 
 
 ## 📰 Update Log
@@ -146,5 +156,6 @@ python -m src.cli.train_classification --config configs/seqclf_distilbert_emotio
 ### 2026-03-30
 - Added a sequence classification training module with dataset preprocessing, evaluation accuracy, and a CLI/config example.
 - Trained `distilbert/distilbert-base-uncased` on `dair-ai/emotion` dataset resulting in 93.8% accuracy.
+- Added a token classification training module with subword label alignment, masked token accuracy, and a CLI/config example.
 
 ---
