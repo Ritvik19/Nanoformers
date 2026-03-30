@@ -21,7 +21,9 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Token Classification | Encoder-only | ✅ |
 | | Extractive Question Answering | Encoder-only | ✅ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
-| **Reinforcement** | Proximal Policy Optimization | Decoder-only | ⬜️ |
+| **Reinforcement** | Reinforce | Decoder-only | ⬜️ |
+| | Reinforce with baseline | Decoder-only | ⬜️ |
+| | Proximal Policy Optimization | Decoder-only | ⬜️ |
 | | Group Relative Policy Optimization | Decoder-only | ⬜️ |
 | **Contrastive** | Contrastive Loss | Agnostic | ⬜️ |
 | | Triplet Loss | Agnostic | ⬜️ |
