@@ -19,7 +19,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Direct Preference Optimization | Decoder-only | ✅ |
 | | Sequence Classification | Encoder-only | ✅ |
 | | Token Classification | Encoder-only | ✅ |
-| | Extractive Question Answering | Encoder-only | ⬜️ |
+| | Extractive Question Answering | Encoder-only | ✅ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
 | **Reinforcement** | Proximal Policy Optimization | Decoder-only | ⬜️ |
 | | Group Relative Policy Optimization | Decoder-only | ⬜️ |
@@ -64,6 +64,11 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### Token Classification
 - `tokens`: list of strings
 - `labels`: list of integers or strings aligned with `tokens`
+
+### Extractive Question Answering
+- `question`: string
+- `context`: string
+- `answers`: dictionary containing `text` (list of strings) and `answer_start` (list of integers)
 
 
 ## ⚡ Getting Started
@@ -116,6 +121,12 @@ python -m src.cli.train_sequence_classification --config configs/seqclf_distilbe
 ```bash
 python -m src.cli.train_token_classification --config configs/tokclf_distilbert_conll2003.yaml
 ```
+
+#### Extractive Question Answering
+
+```bash
+python -m src.cli.train_question_answering --config configs/qa_distilbert_squad.yaml
+```
 --- 
 
 ## 📰 Update Log
@@ -155,6 +166,7 @@ python -m src.cli.train_token_classification --config configs/tokclf_distilbert_
 - Trained `Qwen/Qwen3-0.6B-Base` on `openai/gsm8k` dataset distilled from `Qwen/Qwen3-0.6B` resulting in 20% lift in zero shot pass@1 accuracy (average of 4).
 
 ### 2026-03-30
+- Added an extractive question answering training module with SQuAD dataset parsing, exact match boundary evaluation, and a CLI/config example.
 - Added a sequence classification training module with dataset preprocessing, evaluation accuracy, and a CLI/config example.
 - Trained `distilbert/distilbert-base-uncased` on `dair-ai/emotion` dataset resulting in 93.8% accuracy.
 - Added a token classification training module with subword label alignment, masked token accuracy, and a CLI/config example.
