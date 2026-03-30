@@ -1,0 +1,18 @@
+env_path: ".env"
+model_path: "distilbert/distilbert-base-uncased"
+dataset_path: "Ritvik19/squad-v2"
+output_dir: "models/qa_distilbert_squad"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "qa_distilbert_squad"
+
+# Training settings
+batch_size: 16
+gradient_accumulation_steps: 1
+num_epochs: 10
+learning_rate: 3e-5
+lr_scheduler_type: "cosine"
+max_length: 384
+device: "cuda"
+

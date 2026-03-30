@@ -1,6 +1,7 @@
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
+    AutoModelForQuestionAnswering,
     AutoModelForSequenceClassification,
     AutoModelForTokenClassification,
     AutoTokenizer,
@@ -34,6 +35,15 @@ def load_token_classification_model(model_path, device, num_labels):
     model = AutoModelForTokenClassification.from_pretrained(
         model_path,
         num_labels=num_labels,
+        ignore_mismatched_sizes=True,
+    )
+    model.to(device)
+    return model
+
+
+def load_question_answering_model(model_path, device):
+    model = AutoModelForQuestionAnswering.from_pretrained(
+        model_path,
         ignore_mismatched_sizes=True,
     )
     model.to(device)

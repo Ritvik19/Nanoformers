@@ -30,3 +30,19 @@ def masked_accuracy(predictions, labels, ignore_index=-100):
     if total == 0:
         return 0.0
     return correct / total
+
+
+def qa_exact_match(start_predictions, end_predictions, start_labels, end_labels, ignore_index=-100):
+    correct = 0
+    total = 0
+
+    for p_start, p_end, l_start, l_end in zip(start_predictions, end_predictions, start_labels, end_labels):
+        if l_start == ignore_index or l_end == ignore_index:
+            continue
+        total += 1
+        if p_start == l_start and p_end == l_end:
+            correct += 1
+
+    if total == 0:
+        return 0.0
+    return correct / total
