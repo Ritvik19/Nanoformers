@@ -10,7 +10,7 @@ wandb_run_name: "qa_distilbert_squad"
 # Training settings
 batch_size: 16
 gradient_accumulation_steps: 1
-num_epochs: 3
+num_epochs: 10
 learning_rate: 3e-5
 lr_scheduler_type: "cosine"
 max_length: 384
