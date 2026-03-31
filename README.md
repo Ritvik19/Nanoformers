@@ -20,7 +20,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Sequence Classification | Encoder-only | ✅ |
 | | Token Classification | Encoder-only | ✅ |
 | | Extractive Question Answering | Encoder-only | ✅ |
-| | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
+| | Sequence-to-Sequence Modeling | Encoder-Decoder | ✅ |
 | **Reinforcement** | Reinforce | Decoder-only | ⬜️ |
 | | Reinforce with baseline | Decoder-only | ⬜️ |
 | | Proximal Policy Optimization | Decoder-only | ⬜️ |
@@ -72,6 +72,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - `question`: string
 - `context`: string
 - `answers`: dictionary containing `text` (list of strings) and `answer_start` (list of integers)
+
+### Sequence-to-Sequence Modeling
+- `source`: string
+- `target`: string
 
 
 ## ⚡ Getting Started
@@ -130,6 +134,12 @@ python -m src.cli.train_token_classification --config configs/tokclf_distilbert_
 ```bash
 python -m src.cli.train_question_answering --config configs/qa_distilbert_squad.yaml
 ```
+
+#### Sequence-to-Sequence Modeling
+
+```bash
+python -m src.cli.train_sequence_to_sequence --config configs/seq2seq_flan_t5_base_gsm8k.yaml
+```
 --- 
 
 ## 📰 Update Log
@@ -175,4 +185,5 @@ python -m src.cli.train_question_answering --config configs/qa_distilbert_squad.
 - Trained `distilbert/distilbert-base-uncased` on `conll-2003` dataset resulting in 90.0% accuracy and 90.0% F1 score.
 - Added an extractive question answering training module with SQuAD dataset parsing, exact match boundary evaluation, and a CLI/config example.
 - Trained `distilbert/distilbert-base-uncased` on `squad-v2` dataset resulting in 62.29% exact match and 65.74% F1 score.
+- Added a sequence-to-sequence modeling training module with dataset tokenization, dynamic padding, perplexity evaluation, and a CLI/config example.
 ---
