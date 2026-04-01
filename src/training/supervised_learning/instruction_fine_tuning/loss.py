@@ -42,34 +42,18 @@ def forward_loss(model, batch):
         sequence_length = shifted_logits.size(1)
         shifted_labels = shifted_labels[:, :sequence_length]
 
-        # Convert logits into log-probabilities so we can directly recover the
-        # log pi_theta(y_t | x, y_<t) terms from the equation above.
-        log_probs = F.log_softmax(shifted_logits.float(), dim=-1)
-
-        # M_i from the equation is implemented via the `-100` mask:
+        # M_i from the equation is implemented via `ignore_index=-100`:
         # only assistant completion tokens are supervised; prompt and padding
-        # positions are excluded from both the numerator and denominator.
-        supervision_mask = shifted_labels.ne(-100)
-
-        # `gather` needs valid token ids everywhere, so we temporarily replace
-        # masked positions with 0. Those entries are multiplied by 0
-        # immediately afterward and therefore do not affect the loss.
-        safe_labels = shifted_labels.clone()
-        safe_labels[~supervision_mask] = 0
-
-        # Per-token log-probabilities from the model:
-        #   token_log_probs[i, t] = log pi_theta(y_{i,t} | x_i, y_{i,<t})
-        token_log_probs = log_probs.gather(-1, safe_labels.unsqueeze(-1)).squeeze(-1)
-
-        # Negative log-likelihood on the supervised positions only:
-        #   -log pi_theta(...)
-        token_nll = -token_log_probs * supervision_mask
-
-        # Batch reduction matching the equation above:
-        # sum all supervised token losses, then divide by the number of
-        # supervised tokens. The clamp prevents a divide-by-zero if a rare
-        # fully masked batch appears after truncation.
-        supervised_token_count = supervision_mask.sum().clamp_min(1)
-        loss = token_nll.sum() / supervised_token_count
+        # positions are excluded from both the numerator and denominator
+        # (same mean as the manual log_softmax + gather formulation).
+        if shifted_labels.eq(-100).all():
+            # Match the old clamp_min(1) denominator: no supervised tokens → 0 loss.
+            loss = shifted_logits.sum() * 0.0
+        else:
+            loss = F.cross_entropy(
+                shifted_logits.reshape(-1, shifted_logits.size(-1)).float(),
+                shifted_labels.reshape(-1),
+                ignore_index=-100,
+            )
 
     return loss
