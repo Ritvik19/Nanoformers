@@ -20,7 +20,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Sequence Classification | Encoder-only | ✅ |
 | | Token Classification | Encoder-only | ✅ |
 | | Extractive Question Answering | Encoder-only | ✅ |
-| | Sequence-to-Sequence Modeling | Encoder-Decoder | ⬜️ |
+| | Sequence-to-Sequence Modeling | Encoder-Decoder | ✅ |
 | **Reinforcement** | Reinforce | Decoder-only | ⬜️ |
 | | Reinforce with baseline | Decoder-only | ⬜️ |
 | | Proximal Policy Optimization | Decoder-only | ⬜️ |
@@ -41,6 +41,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `distilbert/distilbert-base-uncased` | `Ritvik19/dair-ai-emotion` | Sequence Classification | [seqclf_distilbert_emotion.yaml](configs/seqclf_distilbert_emotion.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6wlqge7k?nw=nwuserritvik19) |
 | `distilbert/distilbert-base-uncased` | `Ritvik19/conll-2003-ner` | Token Classification | [tokclf_distilbert_conll2003.yaml](configs/tokclf_distilbert_conll2003.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/hrpxlrfe?nw=nwuserritvik19) |
 | `distilbert/distilbert-base-uncased` | `Ritvik19/squad-v2` | Extractive Question Answering | [qa_distilbert_squad.yaml](configs/qa_distilbert_squad.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/x00m7mfb?nw=nwuserritvik19) |
+| `google/flan-t5-base` | `Ritvik19/gsm8k-seq2seq` | Sequence-to-Sequence Modeling | [seq2seq_flan_t5_base_gsm8k.yaml](configs/seq2seq_flan_t5_base_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/n5iq698c?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas
@@ -72,6 +73,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - `question`: string
 - `context`: string
 - `answers`: dictionary containing `text` (list of strings) and `answer_start` (list of integers)
+
+### Sequence-to-Sequence Modeling
+- `source`: string
+- `target`: string
 
 
 ## ⚡ Getting Started
@@ -130,6 +135,12 @@ python -m src.cli.train_token_classification --config configs/tokclf_distilbert_
 ```bash
 python -m src.cli.train_question_answering --config configs/qa_distilbert_squad.yaml
 ```
+
+#### Sequence-to-Sequence Modeling
+
+```bash
+python -m src.cli.train_sequence_to_sequence --config configs/seq2seq_flan_t5_base_gsm8k.yaml
+```
 --- 
 
 ## 📰 Update Log
@@ -175,4 +186,8 @@ python -m src.cli.train_question_answering --config configs/qa_distilbert_squad.
 - Trained `distilbert/distilbert-base-uncased` on `conll-2003` dataset resulting in 90.0% accuracy and 90.0% F1 score.
 - Added an extractive question answering training module with SQuAD dataset parsing, exact match boundary evaluation, and a CLI/config example.
 - Trained `distilbert/distilbert-base-uncased` on `squad-v2` dataset resulting in 62.29% exact match and 65.74% F1 score.
+
+### 2026-04-01
+- Added a sequence-to-sequence modeling training module with dataset tokenization, dynamic padding, perplexity evaluation, and a CLI/config example.
+- Trained `google/flan-t5-base` on `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-seq2seq` dataset resulting in 15% pass@1 accuracy (average of 4).
 ---

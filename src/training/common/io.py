@@ -4,6 +4,7 @@ from transformers import (
     AutoModelForQuestionAnswering,
     AutoModelForSequenceClassification,
     AutoModelForTokenClassification,
+    AutoModelForSeq2SeqLM,
     AutoTokenizer,
 )
 
@@ -57,3 +58,15 @@ def load_reference_model(model_path, device):
     for param in ref_model.parameters():
         param.requires_grad = False
     return ref_model
+
+
+def load_sequence_to_sequence_model(model_path, device, load_weights=True):
+    if load_weights:
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            model_path,
+            ignore_mismatched_sizes=True,
+        )
+    else:
+        model = AutoModelForSeq2SeqLM.from_config(AutoConfig.from_pretrained(model_path))
+    model.to(device)
+    return model
