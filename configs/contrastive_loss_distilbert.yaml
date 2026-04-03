@@ -1,0 +1,20 @@
+env_path: ".env"
+model_path: "distilbert/distilbert-base-uncased"
+dataset_path: "<your-hf-dataset>"  # columns: text_a, text_b, label (1=similar, 0=dissimilar)
+output_dir: "models/contrastive_loss_distilbert"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "contrastive_loss_distilbert"
+
+# Training settings
+batch_size: 128
+gradient_accumulation_steps: 1
+num_epochs: 3
+learning_rate: 2e-5
+lr_scheduler_type: "cosine"
+max_length: 512
+device: "cuda"
+
+# Contrastive loss settings
+margin: 1.0

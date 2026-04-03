@@ -60,6 +60,42 @@ def load_reference_model(model_path, device):
     return ref_model
 
 
+def load_encoder_model(model_path, device):
+    from transformers import AutoModel
+
+    model = AutoModel.from_pretrained(model_path)
+    model.to(device)
+    return model
+
+
+def load_image_text_contrastive_model(model_path, device):
+    from transformers import CLIPModel
+
+    model = CLIPModel.from_pretrained(model_path)
+    model.to(device)
+    return model
+
+
+def load_image_text_contrastive_processor(model_path):
+    from transformers import CLIPProcessor
+
+    return CLIPProcessor.from_pretrained(model_path)
+
+
+def load_image_text_sigmoid_contrastive_model(model_path, device):
+    from transformers import SiglipModel
+
+    model = SiglipModel.from_pretrained(model_path)
+    model.to(device)
+    return model
+
+
+def load_image_text_sigmoid_contrastive_processor(model_path):
+    from transformers import AutoProcessor
+
+    return AutoProcessor.from_pretrained(model_path)
+
+
 def load_sequence_to_sequence_model(model_path, device, load_weights=True):
     if load_weights:
         model = AutoModelForSeq2SeqLM.from_pretrained(

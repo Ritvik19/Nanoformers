@@ -1,0 +1,17 @@
+env_path: ".env"
+model_path: "openai/clip-vit-base-patch32"
+dataset_path: "<your-hf-dataset>"  # columns: image (PIL Image), text (str)
+output_dir: "models/image_text_contrastive_clip"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "image_text_contrastive_clip"
+
+# Training settings
+batch_size: 64
+gradient_accumulation_steps: 1
+num_epochs: 3
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 77
+device: "cuda"
