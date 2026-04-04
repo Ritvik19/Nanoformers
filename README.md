@@ -44,6 +44,9 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `distilbert/distilbert-base-uncased` | `Ritvik19/conll-2003-ner` | Token Classification | [tokclf_distilbert_conll2003.yaml](configs/tokclf_distilbert_conll2003.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/hrpxlrfe?nw=nwuserritvik19) |
 | `distilbert/distilbert-base-uncased` | `Ritvik19/squad-v2` | Extractive Question Answering | [qa_distilbert_squad.yaml](configs/qa_distilbert_squad.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/x00m7mfb?nw=nwuserritvik19) |
 | `google/flan-t5-base` | `Ritvik19/gsm8k-seq2seq` | Sequence-to-Sequence Modeling | [seq2seq_flan_t5_base_gsm8k.yaml](configs/seq2seq_flan_t5_base_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/n5iq698c?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-contrastive` | Contrastive Loss | [contrastive_loss_distilbert_qqp.yaml](configs/contrastive_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/o8y891t1?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-triplet` | Triplet Loss | [triplet_loss_distilbert_qqp.yaml](configs/triplet_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/2s72jin4?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-info_nce` | InfoNCE Loss | [info_nce_loss_distilbert_qqp.yaml](configs/info_nce_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/jpl7ndhk?nw=nwuserritvik19) |
 
 
 ## 🗂️ Dataset Schemas
@@ -169,19 +172,19 @@ python -m src.cli.train_sequence_to_sequence --config configs/seq2seq_flan_t5_ba
 #### Contrastive Loss
 
 ```bash
-python -m src.cli.train_contrastive --config configs/contrastive_loss_distilbert.yaml
+python -m src.cli.train_contrastive --config configs/contrastive_loss_distilbert_qqp.yaml
 ```
 
 #### Triplet Loss
 
 ```bash
-python -m src.cli.train_triplet --config configs/triplet_loss_distilbert.yaml
+python -m src.cli.train_triplet --config configs/triplet_loss_distilbert_qqp.yaml
 ```
 
 #### InfoNCE Loss
 
 ```bash
-python -m src.cli.train_info_nce --config configs/info_nce_loss_distilbert.yaml
+python -m src.cli.train_info_nce --config configs/info_nce_loss_distilbert_qqp.yaml
 ```
 
 #### Image-Text Contrastive
@@ -248,4 +251,9 @@ python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_te
 ### 2026-04-03
 - Added contrastive learning modules: contrastive loss, triplet loss, and InfoNCE loss for text-text representation learning with encoder-only models.
 - Added image-text contrastive learning modules: softmax-based (image-text contrastive) and sigmoid-based (image-text sigmoid contrastive) for dual encoder vision-language training.
+
+### 2026-04-04
+- Trained `distilbert/distilbert-base-uncased` on `qqp-contrastive` dataset resulting in 93.90% accuracy and 92.35% F1 score `glue/qqp` validation set.
+- Trained `distilbert/distilbert-base-uncased` on `qqp-triplet` dataset resulting in 61.69% accuracy and 65.77% F1 score `glue/qqp` validation set.
+- Trained `distilbert/distilbert-base-uncased` on `qqp-info_nce` dataset resulting in 76.37% accuracy and 75.64% F1 score `glue/qqp` validation set.
 ---
