@@ -25,9 +25,11 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Reinforce with baseline | Decoder-only | ⬜️ |
 | | Proximal Policy Optimization | Decoder-only | ⬜️ |
 | | Group Relative Policy Optimization | Decoder-only | ⬜️ |
-| **Contrastive** | Contrastive Loss | Agnostic | ⬜️ |
-| | Triplet Loss | Agnostic | ⬜️ |
-| | InfoNCE Loss | Agnostic | ⬜️ |
+| **Contrastive** | Contrastive Loss | Encoder-only | ✅ |
+| | Triplet Loss | Encoder-only | ✅ |
+| | InfoNCE Loss | Encoder-only | ✅ |
+| | Image-Text Contrastive | Dual Encoder (Vision + Text) | ✅ |
+| | Image-Text Sigmoid Contrastive | Dual Encoder (Vision + Text) | ✅ |
 
 ---
 
@@ -42,9 +44,12 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `distilbert/distilbert-base-uncased` | `Ritvik19/conll-2003-ner` | Token Classification | [tokclf_distilbert_conll2003.yaml](configs/tokclf_distilbert_conll2003.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/hrpxlrfe?nw=nwuserritvik19) |
 | `distilbert/distilbert-base-uncased` | `Ritvik19/squad-v2` | Extractive Question Answering | [qa_distilbert_squad.yaml](configs/qa_distilbert_squad.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/x00m7mfb?nw=nwuserritvik19) |
 | `google/flan-t5-base` | `Ritvik19/gsm8k-seq2seq` | Sequence-to-Sequence Modeling | [seq2seq_flan_t5_base_gsm8k.yaml](configs/seq2seq_flan_t5_base_gsm8k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/n5iq698c?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-contrastive` | Contrastive Loss | [contrastive_loss_distilbert_qqp.yaml](configs/contrastive_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/o8y891t1?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-triplet` | Triplet Loss | [triplet_loss_distilbert_qqp.yaml](configs/triplet_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/2s72jin4?nw=nwuserritvik19) |
+| `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-info_nce` | InfoNCE Loss | [info_nce_loss_distilbert_qqp.yaml](configs/info_nce_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/jpl7ndhk?nw=nwuserritvik19) |
+| `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Contrastive | [image_text_contrastive_clip_flickr30k.yaml](configs/image_text_contrastive_clip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/ikmis8m9?nw=nwuserritvik19) |
+| `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Sigmoid Contrastive | [image_text_sigmoid_contrastive_siglip_flickr30k.yaml](configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/7dhniurx?nw=nwuserritvik19) |
 
-
-## 🗂️ Dataset Schemas
 
 ### Causal Language Modeling (CLM)
 - `text`: string
@@ -77,6 +82,28 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### Sequence-to-Sequence Modeling
 - `source`: string
 - `target`: string
+
+### Contrastive Loss
+- `text_a`: string
+- `text_b`: string
+- `label`: integer (1 = similar, 0 = dissimilar)
+
+### Triplet Loss
+- `anchor`: string
+- `positive`: string
+- `negative`: string
+
+### InfoNCE Loss
+- `text_a`: string (anchor)
+- `text_b`: string (positive pair; negatives are sampled in-batch)
+
+### Image-Text Contrastive
+- `image`: PIL Image
+- `text`: string
+
+### Image-Text Sigmoid Contrastive
+- `image`: PIL Image
+- `text`: string
 
 
 ## ⚡ Getting Started
@@ -141,6 +168,36 @@ python -m src.cli.train_question_answering --config configs/qa_distilbert_squad.
 ```bash
 python -m src.cli.train_sequence_to_sequence --config configs/seq2seq_flan_t5_base_gsm8k.yaml
 ```
+
+#### Contrastive Loss
+
+```bash
+python -m src.cli.train_contrastive --config configs/contrastive_loss_distilbert_qqp.yaml
+```
+
+#### Triplet Loss
+
+```bash
+python -m src.cli.train_triplet --config configs/triplet_loss_distilbert_qqp.yaml
+```
+
+#### InfoNCE Loss
+
+```bash
+python -m src.cli.train_info_nce --config configs/info_nce_loss_distilbert_qqp.yaml
+```
+
+#### Image-Text Contrastive
+
+```bash
+python -m src.cli.train_image_text_contrastive --config configs/image_text_contrastive_clip_flickr30k.yaml
+```
+
+#### Image-Text Sigmoid Contrastive
+
+```bash
+python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml
+```
 --- 
 
 ## 📰 Update Log
@@ -190,4 +247,16 @@ python -m src.cli.train_sequence_to_sequence --config configs/seq2seq_flan_t5_ba
 ### 2026-04-01
 - Added a sequence-to-sequence modeling training module with dataset tokenization, dynamic padding, perplexity evaluation, and a CLI/config example.
 - Trained `google/flan-t5-base` on `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-seq2seq` dataset resulting in 15% pass@1 accuracy (average of 4).
+
+### 2026-04-03
+- Added contrastive learning modules: contrastive loss, triplet loss, and InfoNCE loss for text-text representation learning with encoder-only models.
+- Added image-text contrastive learning modules: softmax-based (image-text contrastive) and sigmoid-based (image-text sigmoid contrastive) for dual encoder vision-language training.
+
+### 2026-04-04
+- Trained `distilbert/distilbert-base-uncased` on `qqp-contrastive` dataset resulting in 93.90% accuracy and 92.35% F1 score `glue/qqp` validation set.
+- Trained `distilbert/distilbert-base-uncased` on `qqp-triplet` dataset resulting in 61.69% accuracy and 65.77% F1 score `glue/qqp` validation set.
+- Trained `distilbert/distilbert-base-uncased` on `qqp-info_nce` dataset resulting in 76.37% accuracy and 75.64% F1 score `glue/qqp` validation set.
+- Updated image-text contrastive learning modules to use separate text and image encoders.
+- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text contrastive loss resulting in 85.3% image-to-text R@10 and 76.82% text-to-image R@10 on the Flickr30k test set.
+- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text sigmoid contrastive loss resulting in 79.2% image-to-text R@10 and 67.66% text-to-image R@10 on the Flickr30k test set.
 ---

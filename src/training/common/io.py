@@ -1,5 +1,7 @@
 from transformers import (
     AutoConfig,
+    AutoImageProcessor,
+    AutoModel,
     AutoModelForCausalLM,
     AutoModelForQuestionAnswering,
     AutoModelForSequenceClassification,
@@ -7,6 +9,8 @@ from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
 )
+
+from src.training.contrastive_learning.dual_encoder import DualEncoderModel
 
 
 def load_tokenizer(model_path):
@@ -58,6 +62,50 @@ def load_reference_model(model_path, device):
     for param in ref_model.parameters():
         param.requires_grad = False
     return ref_model
+
+
+def load_encoder_model(model_path, device):
+    model = AutoModel.from_pretrained(model_path)
+    model.to(device)
+    return model
+
+
+def load_image_text_contrastive_model(text_model_path, image_model_path, projection_dim, device):
+    text_encoder = AutoModel.from_pretrained(text_model_path)
+    image_encoder = AutoModel.from_pretrained(image_model_path)
+    model = DualEncoderModel(
+        text_encoder=text_encoder,
+        image_encoder=image_encoder,
+        text_hidden_size=text_encoder.config.hidden_size,
+        image_hidden_size=image_encoder.config.hidden_size,
+        projection_dim=projection_dim,
+        use_logit_bias=False,
+    )
+    model.to(device)
+    return model
+
+
+def load_image_text_sigmoid_contrastive_model(text_model_path, image_model_path, projection_dim, device):
+    text_encoder = AutoModel.from_pretrained(text_model_path)
+    image_encoder = AutoModel.from_pretrained(image_model_path)
+    model = DualEncoderModel(
+        text_encoder=text_encoder,
+        image_encoder=image_encoder,
+        text_hidden_size=text_encoder.config.hidden_size,
+        image_hidden_size=image_encoder.config.hidden_size,
+        projection_dim=projection_dim,
+        use_logit_bias=True,
+    )
+    model.to(device)
+    return model
+
+
+def load_image_text_tokenizer(model_path):
+    return AutoTokenizer.from_pretrained(model_path)
+
+
+def load_image_text_processor(model_path):
+    return AutoImageProcessor.from_pretrained(model_path)
 
 
 def load_sequence_to_sequence_model(model_path, device, load_weights=True):

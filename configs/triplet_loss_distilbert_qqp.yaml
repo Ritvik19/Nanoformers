@@ -1,0 +1,20 @@
+env_path: ".env"
+model_path: "distilbert/distilbert-base-uncased"
+dataset_path: "Ritvik19/qqp-triplet"
+output_dir: "models/triplet_loss_distilbert_qqp"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "triplet_loss_distilbert_qqp"
+
+# Training settings
+batch_size: 128
+gradient_accumulation_steps: 1
+num_epochs: 10
+learning_rate: 2e-5
+lr_scheduler_type: "cosine"
+max_length: 512
+device: "cuda"
+
+# Triplet loss settings
+margin: 1.0
