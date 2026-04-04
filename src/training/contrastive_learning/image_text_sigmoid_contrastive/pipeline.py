@@ -2,11 +2,12 @@ import torch
 import wandb
 from tqdm.auto import tqdm
 
-from src.training.common.checkpointing import save_checkpoint
+from src.training.common.checkpointing import save_dual_encoder_checkpoint
 from src.training.common.config import load_config
 from src.training.common.io import (
+    load_image_text_processor,
     load_image_text_sigmoid_contrastive_model,
-    load_image_text_sigmoid_contrastive_processor,
+    load_image_text_tokenizer,
 )
 from src.training.common.metrics import mean
 from src.training.common.optim import (
@@ -31,14 +32,15 @@ from src.training.contrastive_learning.image_text_sigmoid_contrastive.loss impor
 )
 
 
-def load_processor_only(args):
-    print("Loading processor...")
-    processor = load_image_text_sigmoid_contrastive_processor(args["model_path"])
-    print("Processor loaded...")
-    return processor
+def load_tokenizer_and_image_processor(args):
+    print("Loading tokenizer and image processor...")
+    tokenizer = load_image_text_tokenizer(args["text_model_path"])
+    image_processor = load_image_text_processor(args["image_model_path"])
+    print("Tokenizer and image processor loaded...")
+    return tokenizer, image_processor
 
 
-def load_and_prepare_dataset(args, processor):
+def load_and_prepare_dataset(args, tokenizer, image_processor):
     print("Loading and preparing dataset...")
     raw_dataset = load_hf_dataset(args["dataset_path"])
 
@@ -62,7 +64,7 @@ def load_and_prepare_dataset(args, processor):
         train_dataset,
         eval_dataset,
         args["batch_size"],
-        lambda batch: collate_fn(batch, processor, max_length),
+        lambda batch: collate_fn(batch, tokenizer, image_processor, max_length),
     )
     print("Dataset loaded and prepared...")
     return train_loader, eval_loader
@@ -70,7 +72,12 @@ def load_and_prepare_dataset(args, processor):
 
 def load_model(args):
     print("Loading model...")
-    model = load_image_text_sigmoid_contrastive_model(args["model_path"], args["device"])
+    model = load_image_text_sigmoid_contrastive_model(
+        args["text_model_path"],
+        args["image_model_path"],
+        args["projection_dim"],
+        args["device"],
+    )
     print("Model loaded...")
     return model
 
@@ -84,13 +91,15 @@ def prepare_optimizer_scaler_and_scheduler(args, model, train_loader):
     return optimizer, scaler, scheduler
 
 
-def train(args, model, processor, train_loader, eval_loader, optimizer, scaler, scheduler):
+def train(args, model, tokenizer, image_processor, train_loader, eval_loader, optimizer, scaler, scheduler):
     print("Starting training...")
     wandb.init(
         project=args["wandb_project"],
         name=args["wandb_run_name"],
         config={
-            "model_name": args["model_path"],
+            "text_model_name": args["text_model_path"],
+            "image_model_name": args["image_model_path"],
+            "projection_dim": args["projection_dim"],
             "dataset_path": args["dataset_path"],
             "batch_size": args["batch_size"],
             "gradient_accumulation_steps": args["gradient_accumulation_steps"],
@@ -148,7 +157,7 @@ def train(args, model, processor, train_loader, eval_loader, optimizer, scaler, 
         )
         print(f"Epoch {epoch + 1} - Eval Loss: {avg_eval_loss:.4f}")
 
-        save_checkpoint(model, processor, args["output_dir"], epoch + 1)
+        save_dual_encoder_checkpoint(model, tokenizer, image_processor, args["output_dir"], epoch + 1)
         model.train()
 
     wandb.finish()
@@ -157,13 +166,13 @@ def train(args, model, processor, train_loader, eval_loader, optimizer, scaler, 
 
 def main():
     args = load_config()
-    processor = load_processor_only(args)
-    train_loader, eval_loader = load_and_prepare_dataset(args, processor)
+    tokenizer, image_processor = load_tokenizer_and_image_processor(args)
+    train_loader, eval_loader = load_and_prepare_dataset(args, tokenizer, image_processor)
     model = load_model(args)
     optimizer, scaler, scheduler = prepare_optimizer_scaler_and_scheduler(
         args, model, train_loader
     )
-    train(args, model, processor, train_loader, eval_loader, optimizer, scaler, scheduler)
+    train(args, model, tokenizer, image_processor, train_loader, eval_loader, optimizer, scaler, scheduler)
 
 
 if __name__ == "__main__":

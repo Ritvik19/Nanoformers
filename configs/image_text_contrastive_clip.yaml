@@ -1,5 +1,7 @@
 env_path: ".env"
-model_path: "openai/clip-vit-base-patch32"
+text_model_path: "distilbert/distilbert-base-uncased"
+image_model_path: "google/vit-base-patch16-224"
+projection_dim: 512
 dataset_path: "<your-hf-dataset>"  # columns: image (PIL Image), text (str)
 output_dir: "models/image_text_contrastive_clip"
 
