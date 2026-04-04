@@ -1,0 +1,19 @@
+env_path: ".env"
+text_model_path: "FacebookAI/roberta-base"
+image_model_path: "google/vit-base-patch16-224"
+projection_dim: 768
+dataset_path: "Ritvik19/flickr30k"
+output_dir: "/home/azureuser/nvme_1/models/image_text_sigmoid_contrastive_siglip_flickr30k"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "image_text_sigmoid_contrastive_siglip_flickr30k"
+
+# Training settings
+batch_size: 64
+gradient_accumulation_steps: 1
+num_epochs: 10
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 128
+device: "cuda"

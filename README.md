@@ -47,9 +47,9 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-contrastive` | Contrastive Loss | [contrastive_loss_distilbert_qqp.yaml](configs/contrastive_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/o8y891t1?nw=nwuserritvik19) |
 | `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-triplet` | Triplet Loss | [triplet_loss_distilbert_qqp.yaml](configs/triplet_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/2s72jin4?nw=nwuserritvik19) |
 | `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-info_nce` | InfoNCE Loss | [info_nce_loss_distilbert_qqp.yaml](configs/info_nce_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/jpl7ndhk?nw=nwuserritvik19) |
+| `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Contrastive | [image_text_contrastive_clip_flickr30k.yaml](configs/image_text_contrastive_clip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/ikmis8m9?nw=nwuserritvik19) |
+| `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Sigmoid Contrastive | [image_text_sigmoid_contrastive_siglip_flickr30k.yaml](configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/7dhniurx?nw=nwuserritvik19) |
 
-
-## 🗂️ Dataset Schemas
 
 ### Causal Language Modeling (CLM)
 - `text`: string
@@ -190,13 +190,13 @@ python -m src.cli.train_info_nce --config configs/info_nce_loss_distilbert_qqp.y
 #### Image-Text Contrastive
 
 ```bash
-python -m src.cli.train_image_text_contrastive --config configs/image_text_contrastive_clip.yaml
+python -m src.cli.train_image_text_contrastive --config configs/image_text_contrastive_clip_flickr30k.yaml
 ```
 
 #### Image-Text Sigmoid Contrastive
 
 ```bash
-python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_text_sigmoid_contrastive_siglip.yaml
+python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml
 ```
 --- 
 
@@ -256,4 +256,7 @@ python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_te
 - Trained `distilbert/distilbert-base-uncased` on `qqp-contrastive` dataset resulting in 93.90% accuracy and 92.35% F1 score `glue/qqp` validation set.
 - Trained `distilbert/distilbert-base-uncased` on `qqp-triplet` dataset resulting in 61.69% accuracy and 65.77% F1 score `glue/qqp` validation set.
 - Trained `distilbert/distilbert-base-uncased` on `qqp-info_nce` dataset resulting in 76.37% accuracy and 75.64% F1 score `glue/qqp` validation set.
+- Updated image-text contrastive learning modules to use separate text and image encoders.
+- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text contrastive loss resulting in 85.3% image-to-text R@10 and 76.82% text-to-image R@10 on the Flickr30k test set.
+- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text sigmoid contrastive loss resulting in 79.2% image-to-text R@10 and 67.66% text-to-image R@10 on the Flickr30k test set.
 ---
