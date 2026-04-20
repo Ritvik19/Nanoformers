@@ -31,6 +31,28 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Image-Text Contrastive | Dual Encoder (Vision + Text) | ✅ |
 | | Image-Text Sigmoid Contrastive | Dual Encoder (Vision + Text) | ✅ |
 
+- Implement parallelization strategies for scaling training across multiple GPUs:
+
+| Strategy | Scope | Status |
+| :--- | :--- | :---: |
+| **Gradient Accumulation** | Single GPU, larger effective batch | ⬜️ |
+| **Mixed Precision (fp16 / bf16)** | Single GPU, memory & speed | ⬜️ |
+| **Data Parallelism (DDP)** | Replicate model, shard batch | ⬜️ |
+| **Fully Sharded Data Parallelism (FSDP / ZeRO-3)** | Shard params, grads, optimizer states | ⬜️ |
+| **Tensor Parallelism (TP)** | Shard individual matmuls within a layer | ⬜️ |
+| **Pipeline Parallelism (PP)** | Shard layers across GPUs with micro-batching | ⬜️ |
+| **Context / Sequence Parallelism (CP / SP)** | Shard along sequence length | ⬜️ |
+| **Expert Parallelism (EP)** | Shard MoE experts across GPUs | ⬜️ |
+
+> See [PARALLELISM_GUIDE.md](PARALLELISM_GUIDE.md) for detailed explanations of each strategy.
+
+- Implement parameter-efficient fine-tuning (PEFT) methods:
+
+| Method | Description | Status |
+| :--- | :--- | :---: |
+| **LoRA** | Low-Rank Adaptation (`W + BA`), trainable low-rank adapters on a frozen base model | ⬜️ |
+| **QLoRA** | LoRA on top of a quantized base model (4-bit weights, bf16 adapters) | ⬜️ |
+
 ---
 
 ## 🚀 Models Trained
