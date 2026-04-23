@@ -1,0 +1,20 @@
+env_path: ".env"
+model_path: "t5-base"
+dataset_path: "Ritvik19/open-web-text"
+output_dir: "models/span_corruption_t5_base_open_web_text"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "span_corruption_t5_base_open_web_text"
+
+# Training settings
+batch_size: 64
+gradient_accumulation_steps: 1
+num_epochs: 1
+learning_rate: 5e-5
+lr_scheduler_type: "cosine"
+max_length: 512
+noise_density: 0.15
+mean_span_length: 3.0
+device: "cuda"
+load_weights: true

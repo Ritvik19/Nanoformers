@@ -3,6 +3,7 @@ from transformers import (
     AutoImageProcessor,
     AutoModel,
     AutoModelForCausalLM,
+    AutoModelForMaskedLM,
     AutoModelForQuestionAnswering,
     AutoModelForSequenceClassification,
     AutoModelForTokenClassification,
@@ -22,6 +23,15 @@ def load_causal_lm_model(model_path, device, load_weights=True):
         model = AutoModelForCausalLM.from_pretrained(model_path)
     else:
         model = AutoModelForCausalLM.from_config(AutoConfig.from_pretrained(model_path))
+    model.to(device)
+    return model
+
+
+def load_masked_lm_model(model_path, device, load_weights=True):
+    if load_weights:
+        model = AutoModelForMaskedLM.from_pretrained(model_path)
+    else:
+        model = AutoModelForMaskedLM.from_config(AutoConfig.from_pretrained(model_path))
     model.to(device)
     return model
 

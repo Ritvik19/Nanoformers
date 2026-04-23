@@ -13,8 +13,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | Paradigm | Task | Architecture | Status |
 | :--- | :--- | :--- | :---: |
 | **Self-Supervised** | Causal Language Modeling | Decoder-only | ✅ |
-| | Masked Language Modeling | Encoder-only | ⬜️ |
-| | Span Corruption | Encoder-Decoder | ⬜️ |
+| | Masked Language Modeling | Encoder-only | ✅ |
+| | Span Corruption | Encoder-Decoder | ✅ |
 | **Supervised** | Instruction Fine-Tuning | Decoder-only | ✅ |
 | | Direct Preference Optimization | Decoder-only | ✅ |
 | | Sequence Classification | Encoder-only | ✅ |
@@ -71,9 +71,17 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `distilbert/distilbert-base-uncased` | `Ritvik19/qqp-info_nce` | InfoNCE Loss | [info_nce_loss_distilbert_qqp.yaml](configs/info_nce_loss_distilbert_qqp.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/jpl7ndhk?nw=nwuserritvik19) |
 | `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Contrastive | [image_text_contrastive_clip_flickr30k.yaml](configs/image_text_contrastive_clip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/1s18t8h4?nw=nwuserritvik19) |
 | `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Sigmoid Contrastive | [image_text_sigmoid_contrastive_siglip_flickr30k.yaml](configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6q89d7xe?nw=nwuserritvik19) |
+| `bert-base-uncased` | `Ritvik19/open-web-text` | Masked Language Modeling | [mlm_bert_open_web_text.yaml](configs/mlm_bert_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/1jiqkkmp?nw=nwuserritvik19) |
+| `t5-base` | `Ritvik19/open-web-text` | Span Corruption | [span_corruption_t5_base_open_web_text.yaml](configs/span_corruption_t5_base_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/tnotg2s3?nw=nwuserritvik19) |
 
 
 ### Causal Language Modeling (CLM)
+- `text`: string
+
+### Masked Language Modeling (MLM)
+- `text`: string
+
+### Span Corruption
 - `text`: string
 
 ### Instruction Fine-Tuning (IFT)
@@ -155,6 +163,18 @@ pip install -r requirements.txt
 python -m src.cli.train_clm --config configs/clm_qwen_gsm8k.yaml
 ```
 
+#### Masked Language Modeling (MLM)
+
+```bash
+python -m src.cli.train_mlm --config configs/mlm_bert_open_web_text.yaml
+```
+
+#### Span Corruption
+
+```bash
+python -m src.cli.train_span_corruption --config configs/span_corruption_t5_base_open_web_text.yaml
+```
+
 #### Instruction Fine-Tuning (IFT)
 
 ```bash
@@ -224,39 +244,31 @@ python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_te
 
 ## 📰 Update Log
 
-### 2025-10-11
-- Added training scripts for Causal Language Modeling  
-- Trained `google/gemma-3-270m` on `roneneldan/TinyStories` dataset
+### 2026-04-22
+- Trained `bert-base-uncased` on `open-web-text` for 1 epoch of MLM, reducing loss from 2.7277 (perplexity 15.30) for the pretrained `bert-base-uncased` to 1.4968 (perplexity 4.47).
+- Trained `t5-base` on `open-web-text` for 1 epoch of Span Corruption, reducing loss from 1.7892 (perplexity 5.98) for the pretrained `t5-base` to 1.5889 (perplexity 4.90).
 
-### 2025-10-22
-- Added training scripts for Instruction Fine-Tuning  
-- Trained `unsloth/gemma-3-270m-it` on `openai/gsm8k` dataset  
-- Fixed loss masking for padding tokens in Causal Language Modeling
+### 2026-04-21
+- Added a T5-style span corruption training module with the standard `random_spans_noise_mask` algorithm (15% corruption, mean span length 3), online sentinel construction, manual seq2seq NLL.
 
-### 2025-10-24
-- Removed stride parameter from `group_texts` function for consistency in Instruction Fine-Tuning
+### 2026-04-20
+- Added a masked language modeling training module with dynamic 15% / 80-10-10 masking, manual MLM NLL computation.
 
-### 2026-03-23
-- Fixed 4 bugs in training scripts across CLM, IFT, and DPO
-- Resolved critical `NameError` in the CLM dataset utilities (missing `for` clause in target token masking)
-- Added `test_size` guards in the IFT and DPO pipelines to prevent `test_size=0` crashes
-- Ensured `model.train()` is called after evaluation in all training loops
+### 2026-04-04
+- Trained `distilbert/distilbert-base-uncased` on `qqp-contrastive` dataset resulting in 93.90% accuracy and 92.35% F1 score `glue/qqp` validation set.
+- Trained `distilbert/distilbert-base-uncased` on `qqp-triplet` dataset resulting in 61.69% accuracy and 65.77% F1 score `glue/qqp` validation set.
+- Trained `distilbert/distilbert-base-uncased` on `qqp-info_nce` dataset resulting in 76.37% accuracy and 75.64% F1 score `glue/qqp` validation set.
+- Updated image-text contrastive learning modules to use separate text and image encoders.
+- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text contrastive loss resulting in 90.1% image-to-text R@10 and 80.82% text-to-image R@10 on the Flickr30k test set.
+- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text sigmoid contrastive loss resulting in 84.4% image-to-text R@10 and 75.14% text-to-image R@10 on the Flickr30k test set.
 
-### 2026-03-26
-- Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 5% lift in pass@1 accuracy (average of 4).
+### 2026-04-03
+- Added contrastive learning modules: contrastive loss, triplet loss, and InfoNCE loss for text-text representation learning with encoder-only models.
+- Added image-text contrastive learning modules: softmax-based (image-text contrastive) and sigmoid-based (image-text sigmoid contrastive) for dual encoder vision-language training.
 
-### 2026-03-27
-- Updated all training pipelines to natively support datasets from the Hugging Face Hub (via `datasets.load_dataset`) alongside local files.
-
-### 2026-03-28
-- Verified the DPO loss implementation step by step and added comprehensive documentation.
-- Refined DPO training configuration with optimized parameters. Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 10% lift in pass@1 accuracy (average of 4).
-
-### 2026-03-29
-- Implemented manual causal language modeling loss calculation for Instruction Fine-Tuning.
-- Implemented manual causal language modeling loss computation in the Causal Language Modeling pipeline.
-- Made BOS token prepending optional in Causal Language Modeling dataset processing based on `bos_token_id` configuration.
-- Trained `Qwen/Qwen3-0.6B-Base` on `openai/gsm8k` dataset distilled from `Qwen/Qwen3-0.6B` resulting in 20% lift in zero shot pass@1 accuracy (average of 4).
+### 2026-04-01
+- Added a sequence-to-sequence modeling training module with dataset tokenization, dynamic padding, perplexity evaluation, and a CLI/config example.
+- Trained `google/flan-t5-base` on `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-seq2seq` dataset resulting in 15% pass@1 accuracy (average of 4).
 
 ### 2026-03-30
 - Added a sequence classification training module with dataset preprocessing, evaluation accuracy, and a CLI/config example.
@@ -266,19 +278,37 @@ python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_te
 - Added an extractive question answering training module with SQuAD dataset parsing, exact match boundary evaluation, and a CLI/config example.
 - Trained `distilbert/distilbert-base-uncased` on `squad-v2` dataset resulting in 62.29% exact match and 65.74% F1 score.
 
-### 2026-04-01
-- Added a sequence-to-sequence modeling training module with dataset tokenization, dynamic padding, perplexity evaluation, and a CLI/config example.
-- Trained `google/flan-t5-base` on `Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-seq2seq` dataset resulting in 15% pass@1 accuracy (average of 4).
+### 2026-03-29
+- Implemented manual causal language modeling loss calculation for Instruction Fine-Tuning.
+- Implemented manual causal language modeling loss computation in the Causal Language Modeling pipeline.
+- Made BOS token prepending optional in Causal Language Modeling dataset processing based on `bos_token_id` configuration.
+- Trained `Qwen/Qwen3-0.6B-Base` on `openai/gsm8k` dataset distilled from `Qwen/Qwen3-0.6B` resulting in 20% lift in zero shot pass@1 accuracy (average of 4).
 
-### 2026-04-03
-- Added contrastive learning modules: contrastive loss, triplet loss, and InfoNCE loss for text-text representation learning with encoder-only models.
-- Added image-text contrastive learning modules: softmax-based (image-text contrastive) and sigmoid-based (image-text sigmoid contrastive) for dual encoder vision-language training.
+### 2026-03-28
+- Verified the DPO loss implementation step by step and added comprehensive documentation.
+- Refined DPO training configuration with optimized parameters. Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 10% lift in pass@1 accuracy (average of 4).
 
-### 2026-04-04
-- Trained `distilbert/distilbert-base-uncased` on `qqp-contrastive` dataset resulting in 93.90% accuracy and 92.35% F1 score `glue/qqp` validation set.
-- Trained `distilbert/distilbert-base-uncased` on `qqp-triplet` dataset resulting in 61.69% accuracy and 65.77% F1 score `glue/qqp` validation set.
-- Trained `distilbert/distilbert-base-uncased` on `qqp-info_nce` dataset resulting in 76.37% accuracy and 75.64% F1 score `glue/qqp` validation set.
-- Updated image-text contrastive learning modules to use separate text and image encoders.
-- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text contrastive loss resulting in 90.1% image-to-text R@10 and 80.82% text-to-image R@10 on the Flickr30k test set.
-- Trained `FacebookAI/roberta-base` and `google/vit-base-patch16-224` on `Ritvik19/flickr30k` dataset using image-text sigmoid contrastive loss resulting in 84.4% image-to-text R@10 and 75.14% text-to-image R@10 on the Flickr30k test set.
+### 2026-03-27
+- Updated all training pipelines to natively support datasets from the Hugging Face Hub (via `datasets.load_dataset`) alongside local files.
+
+### 2026-03-26
+- Trained `Qwen/Qwen3-0.6B` on a custom onpolicy variant of `openai/gsm8k` dataset resulting in 5% lift in pass@1 accuracy (average of 4).
+
+### 2026-03-23
+- Fixed 4 bugs in training scripts across CLM, IFT, and DPO
+- Resolved critical `NameError` in the CLM dataset utilities (missing `for` clause in target token masking)
+- Added `test_size` guards in the IFT and DPO pipelines to prevent `test_size=0` crashes
+- Ensured `model.train()` is called after evaluation in all training loops
+
+### 2025-10-24
+- Removed stride parameter from `group_texts` function for consistency in Instruction Fine-Tuning
+
+### 2025-10-22
+- Added training scripts for Instruction Fine-Tuning  
+- Trained `unsloth/gemma-3-270m-it` on `openai/gsm8k` dataset  
+- Fixed loss masking for padding tokens in Causal Language Modeling
+
+### 2025-10-11
+- Added training scripts for Causal Language Modeling  
+- Trained `google/gemma-3-270m` on `roneneldan/TinyStories` dataset
 ---
