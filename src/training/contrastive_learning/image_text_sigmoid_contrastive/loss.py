@@ -16,7 +16,10 @@ def forward_loss(model, batch):
     # Unlike softmax-based contrastive loss, no global normalization is
     # needed across the batch, which makes the loss more scalable to very
     # large batch sizes across many devices.
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         image_features = model.get_image_features(pixel_values=batch["pixel_values"])
         text_features = model.get_text_features(
             input_ids=batch["input_ids"],

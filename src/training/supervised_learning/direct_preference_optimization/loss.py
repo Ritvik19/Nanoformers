@@ -32,7 +32,10 @@ def forward_loss(model, ref_model, batch, beta):
     # - "rejected" is y_l (the dispreferred completion)
     # - per_example_sum_logprob(...) gives the sequence log-probability term
     #   log pi(... | x) by summing token log-probs over the target completion.
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         chosen_logits = model(
             input_ids=batch["chosen_input_ids"],
             attention_mask=batch["chosen_attention_mask"],

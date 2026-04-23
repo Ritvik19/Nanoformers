@@ -25,7 +25,10 @@ def forward_loss(model, batch):
     #
     # We compute this manually instead of relying on HF's internal
     # `model(..., labels=...)` loss path.
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         logits = model(
             input_ids=batch["input_ids"],
             attention_mask=batch["attention_mask"],

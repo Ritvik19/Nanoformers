@@ -3,7 +3,10 @@ import torch.nn.functional as F
 
 
 def forward_loss(model, batch):
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         logits = model(
             input_ids=batch["input_ids"],
             attention_mask=batch["attention_mask"],

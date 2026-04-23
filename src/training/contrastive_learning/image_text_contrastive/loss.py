@@ -11,7 +11,10 @@ def forward_loss(model, batch):
     #   L     = (L_i2t + L_t2i) / 2
     #
     # where I and T are L2-normalised image and text embeddings.
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         image_features = model.get_image_features(pixel_values=batch["pixel_values"])
         text_features = model.get_text_features(
             input_ids=batch["input_ids"],

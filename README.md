@@ -244,6 +244,9 @@ python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_te
 
 ## 📰 Update Log
 
+### 2026-04-23
+- Standardized automatic mixed precision in all training `forward_loss` implementations: `torch.cuda.amp.autocast` now passes `dtype=torch.bfloat16` (instead of the default float16) whenever CUDA is available. 
+
 ### 2026-04-22
 - Trained `bert-base-uncased` on `open-web-text` for 1 epoch of MLM, reducing loss from 2.7277 (perplexity 15.30) for the pretrained `bert-base-uncased` to 1.4968 (perplexity 4.47).
 - Trained `t5-base` on `open-web-text` for 1 epoch of Span Corruption, reducing loss from 1.7892 (perplexity 5.98) for the pretrained `t5-base` to 1.5889 (perplexity 4.90).

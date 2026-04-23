@@ -5,7 +5,10 @@ import torch.nn.functional as F
 def forward_loss(model, batch):
     model_inputs = {key: value for key, value in batch.items() if key != "labels"}
 
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         logits = model(
             **model_inputs,
             return_dict=True,

@@ -14,7 +14,10 @@ def forward_loss(model, batch, temperature=0.07):
     # Given a batch of N positive pairs, both views are encoded and every
     # other embedding in the 2N set serves as a negative.  The loss is
     # symmetric: each side of the pair takes a turn as the anchor.
-    with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
+    with torch.cuda.amp.autocast(
+        enabled=torch.cuda.is_available(),
+        dtype=torch.bfloat16,
+    ):
         anchor_emb = encode(
             model, batch["anchor_input_ids"], batch["anchor_attention_mask"]
         )
