@@ -11,6 +11,17 @@ def save_checkpoint(model, tokenizer, output_dir, epoch):
     return checkpoint_path
 
 
+def save_transient_checkpoint(model, tokenizer, output_dir, name="_vllm_sync"):
+    # Used by RL pipelines for mid-training weight syncs into the inference engine.
+    # Always overwrites the same directory so we don't accumulate one folder per
+    # step on disk; persistent epoch checkpoints still go through `save_checkpoint`.
+    checkpoint_path = os.path.join(output_dir, name)
+    os.makedirs(checkpoint_path, exist_ok=True)
+    model.save_pretrained(checkpoint_path)
+    tokenizer.save_pretrained(checkpoint_path)
+    return checkpoint_path
+
+
 def save_dual_encoder_checkpoint(model, tokenizer, image_processor, output_dir, epoch):
     checkpoint_path = os.path.join(output_dir, f"epoch_{epoch}")
 

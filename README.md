@@ -21,8 +21,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Token Classification | Encoder-only | ✅ |
 | | Extractive Question Answering | Encoder-only | ✅ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ✅ |
-| **Reinforcement** | Reinforce | Decoder-only | ⬜️ |
-| | Reinforce with baseline | Decoder-only | ⬜️ |
+| **Reinforcement** | Reinforce <br> with the following addons: <br> - Baseline <br> - KL Penalty <br> - Length Normalization | Decoder-only | ✅ |
 | | Proximal Policy Optimization | Decoder-only | ⬜️ |
 | | Group Relative Policy Optimization | Decoder-only | ⬜️ |
 | **Contrastive** | Contrastive Loss | Encoder-only | ✅ |
@@ -135,6 +134,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - `image`: PIL Image
 - `text`: string
 
+### REINFORCE / REINFORCE with baseline
+- `prompt`: list of dicts (chat messages, same format as IFT)
+- `answer`: string (ground-truth final answer; reward is `1.0` if the model's `\boxed{...}` matches via `math_verify`, else `0.0`)
+
 
 ## ⚡ Getting Started
 
@@ -240,9 +243,60 @@ python -m src.cli.train_image_text_contrastive --config configs/image_text_contr
 ```bash
 python -m src.cli.train_image_text_sigmoid_contrastive --config configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml
 ```
---- 
+
+#### REINFORCE 
+
+The RL training loop is split into two processes that you launch on separate
+GPU pools using `CUDA_VISIBLE_DEVICES`:
+
+1. **vLLM rollout server** — produces on-policy completions, exposes an
+   OpenAI-compatible API plus a `/collective_rpc` admin endpoint that the
+   trainer uses to hot-swap weights between optimizer steps. The launch
+   script sets `VLLM_SERVER_DEV_MODE=1`, which is what gates `/collective_rpc`
+   and `/reset_prefix_cache` in vLLM 0.10.x — without it those endpoints
+   return 404 and weight sync silently fails.
+
+   ```bash
+   CUDA_VISIBLE_DEVICES=0 bash scripts/serve_vllm.sh
+   ```
+
+   Override defaults via env vars: `MODEL=Qwen/Qwen3-0.6B PORT=8000
+   GPU_MEMORY_UTILIZATION=0.9 bash scripts/serve_vllm.sh`.
+
+2. **REINFORCE trainer** — pulls rollouts from vLLM, scores them with
+   `math_verify` against the boxed answer, runs the REINFORCE backward pass
+   on the local policy.
+
+```bash
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_reinforce.sh
+```
+
+   Or directly:
+
+```bash
+python -m src.cli.train_reinforce --config configs/reinforce_qwen_gsm8k.yaml
+```
+
+Toggle the variant via [configs/reinforce_qwen_math.yaml](configs/reinforce_qwen_math.yaml):
+
+- `use_baseline: false` → vanilla REINFORCE (`L = -R * sum_t log pi(y_t)`).
+- `use_baseline: true` → REINFORCE with batch-mean baseline
+  (`L = -(R - mean(R)) * sum_t log pi(y_t)`).
+- `length_normalize: false` → divide the per-sequence log-prob sum by the
+  completion length before scaling by the advantage. The unbiased
+  policy-gradient estimator uses the raw sum (`false`), but the mean form
+  (`true`) prevents long rollouts from dominating the gradient by token count
+  and matches what PPO / GRPO / RLOO use in practice.
+- `kl_coeff: 0.0` → no reference model (lighter on training-side memory).
+  Set `> 0` to load a frozen reference and add a KL-to-reference penalty.
+
+---
 
 ## 📰 Update Log
+
+### 2026-04-29
+- Added a REINFORCE training module with vLLM rollout server, REINFORCE with baseline, and REINFORCE with KL penalty.
+- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset resulting in 6% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
 
 ### 2026-04-23
 - Standardized automatic mixed precision in all training `forward_loss` implementations: `torch.cuda.amp.autocast` now passes `dtype=torch.bfloat16` (instead of the default float16) whenever CUDA is available. 
