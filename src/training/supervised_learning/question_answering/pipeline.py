@@ -113,6 +113,18 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
 
     device = args["device"]
     global_step = 0
+    ga = args["gradient_accumulation_steps"]
+    # Accumulate raw start/end preds & labels so exact-match is computed over
+    # the concatenated effective batch (mean-of-batch-EMs is biased on uneven
+    # tail batches and obscures rare-correct cases).
+    accum = {
+        "loss": 0.0,
+        "start_preds": [],
+        "end_preds": [],
+        "start_labels": [],
+        "end_labels": [],
+        "count": 0,
+    }
     model.train()
     for epoch in range(args["num_epochs"]):
         loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args['num_epochs']}")
@@ -120,11 +132,26 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
             batch = move_batch_to_device(batch, device)
             loss, logits = forward_loss(model, batch)
             start_logits, end_logits = logits
-            
-            scaled_loss = loss / args["gradient_accumulation_steps"]
+
+            scaled_loss = loss / ga
             scaler.scale(scaled_loss).backward()
 
-            if (step + 1) % args["gradient_accumulation_steps"] == 0:
+            accum["loss"] += loss.item()
+            accum["start_preds"].extend(
+                start_logits.argmax(dim=-1).detach().cpu().tolist()
+            )
+            accum["end_preds"].extend(
+                end_logits.argmax(dim=-1).detach().cpu().tolist()
+            )
+            accum["start_labels"].extend(
+                batch["start_positions"].detach().cpu().tolist()
+            )
+            accum["end_labels"].extend(
+                batch["end_positions"].detach().cpu().tolist()
+            )
+            accum["count"] += 1
+
+            if (step + 1) % ga == 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 scaler.step(optimizer)
@@ -133,21 +160,17 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
                 scheduler.step()
                 global_step += 1
 
-                batch_start_preds = start_logits.argmax(dim=-1).detach().cpu().tolist()
-                batch_end_preds = end_logits.argmax(dim=-1).detach().cpu().tolist()
-                batch_start_labels = batch["start_positions"].detach().cpu().tolist()
-                batch_end_labels = batch["end_positions"].detach().cpu().tolist()
-                
+                avg_loss = accum["loss"] / accum["count"]
                 batch_em = qa_exact_match(
-                    batch_start_preds, 
-                    batch_end_preds, 
-                    batch_start_labels, 
-                    batch_end_labels
+                    accum["start_preds"],
+                    accum["end_preds"],
+                    accum["start_labels"],
+                    accum["end_labels"],
                 )
 
                 wandb.log(
                     {
-                        "train/loss": loss.item(),
+                        "train/loss": avg_loss,
                         "train/exact_match": batch_em,
                         "train/lr": scheduler.get_last_lr()[0],
                         "train/global_step": global_step,
@@ -157,11 +180,20 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
                 )
                 loop.set_postfix(
                     {
-                        "loss": loss.item(),
+                        "loss": avg_loss,
                         "em": batch_em,
                         "lr": scheduler.get_last_lr()[0],
                     }
                 )
+
+                accum = {
+                    "loss": 0.0,
+                    "start_preds": [],
+                    "end_preds": [],
+                    "start_labels": [],
+                    "end_labels": [],
+                    "count": 0,
+                }
 
         model.eval()
         eval_losses = []
