@@ -72,7 +72,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `FacebookAI/roberta-base` and `google/vit-base-patch16-224` | `Ritvik19/flickr30k` | Image-Text Sigmoid Contrastive | [image_text_sigmoid_contrastive_siglip_flickr30k.yaml](configs/image_text_sigmoid_contrastive_siglip_flickr30k.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/6q89d7xe?nw=nwuserritvik19) |
 | `bert-base-uncased` | `Ritvik19/open-web-text` | Masked Language Modeling | [mlm_bert_open_web_text.yaml](configs/mlm_bert_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/1jiqkkmp?nw=nwuserritvik19) |
 | `t5-base` | `Ritvik19/open-web-text` | Span Corruption | [span_corruption_t5_base_open_web_text.yaml](configs/span_corruption_t5_base_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/tnotg2s3?nw=nwuserritvik19) |
-
+| `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | REINFORCE | [reinforce_qwen_math.yaml](configs/reinforce_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/a2ttdud6?nw=nwuserritvik19) |
 
 ### Causal Language Modeling (CLM)
 - `text`: string
