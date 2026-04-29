@@ -131,16 +131,24 @@ def train(
     device = args["device"]
     beta = args["dpo_beta"]
     global_step = 0
+    ga = args["gradient_accumulation_steps"]
+    # Accumulate raw per-sample advantages so reward-style stats describe the
+    # full effective batch instead of just the last micro-batch.
+    accum = {"loss": 0.0, "advantages": [], "count": 0}
     model.train()
     for epoch in range(args["num_epochs"]):
         loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args['num_epochs']}")
         for step, batch in enumerate(loop):
             batch = move_batch_to_device(batch, device)
             loss, advantage, _ = forward_loss(model, ref_model, batch, beta)
-            scaled_loss = loss / args["gradient_accumulation_steps"]
+            scaled_loss = loss / ga
             scaler.scale(scaled_loss).backward()
 
-            if (step + 1) % args["gradient_accumulation_steps"] == 0:
+            accum["loss"] += loss.item()
+            accum["advantages"].extend(advantage.detach().cpu().tolist())
+            accum["count"] += 1
+
+            if (step + 1) % ga == 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 scaler.step(optimizer)
@@ -149,10 +157,16 @@ def train(
                 scheduler.step()
                 global_step += 1
 
-                avg_advantage = advantage.mean().item()
+                avg_loss = accum["loss"] / accum["count"]
+                avg_advantage = (
+                    sum(accum["advantages"]) / len(accum["advantages"])
+                    if accum["advantages"]
+                    else 0.0
+                )
+
                 wandb.log(
                     {
-                        "train/dpo_loss": loss.item(),
+                        "train/dpo_loss": avg_loss,
                         "train/avg_advantage": avg_advantage,
                         "train/lr": scheduler.get_last_lr()[0],
                         "train/global_step": global_step,
@@ -162,11 +176,13 @@ def train(
                 )
                 loop.set_postfix(
                     {
-                        "dpo_loss": loss.item(),
+                        "dpo_loss": avg_loss,
                         "adv": avg_advantage,
                         "lr": scheduler.get_last_lr()[0],
                     }
                 )
+
+                accum = {"loss": 0.0, "advantages": [], "count": 0}
 
         model.eval()
         eval_losses = []

@@ -144,16 +144,27 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
 
     device = args["device"]
     global_step = 0
+    ga = args["gradient_accumulation_steps"]
+    # Accumulate raw preds/labels so token-accuracy is computed over the
+    # concatenated effective batch instead of averaging per-micro-batch
+    # accuracies (which would weight ragged sequences incorrectly when
+    # masked_accuracy ignores -100 padding).
+    accum = {"loss": 0.0, "predictions": [], "labels": [], "count": 0}
     model.train()
     for epoch in range(args["num_epochs"]):
         loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args['num_epochs']}")
         for step, batch in enumerate(loop):
             batch = move_batch_to_device(batch, device)
             loss, logits = forward_loss(model, batch)
-            scaled_loss = loss / args["gradient_accumulation_steps"]
+            scaled_loss = loss / ga
             scaler.scale(scaled_loss).backward()
 
-            if (step + 1) % args["gradient_accumulation_steps"] == 0:
+            accum["loss"] += loss.item()
+            accum["predictions"].extend(logits.argmax(dim=-1).detach().cpu().tolist())
+            accum["labels"].extend(batch["labels"].detach().cpu().tolist())
+            accum["count"] += 1
+
+            if (step + 1) % ga == 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 scaler.step(optimizer)
@@ -162,13 +173,14 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
                 scheduler.step()
                 global_step += 1
 
-                batch_predictions = logits.argmax(dim=-1).detach().cpu().tolist()
-                batch_labels = batch["labels"].detach().cpu().tolist()
-                batch_accuracy = masked_accuracy(batch_predictions, batch_labels)
+                avg_loss = accum["loss"] / accum["count"]
+                batch_accuracy = masked_accuracy(
+                    accum["predictions"], accum["labels"]
+                )
 
                 wandb.log(
                     {
-                        "train/loss": loss.item(),
+                        "train/loss": avg_loss,
                         "train/token_accuracy": batch_accuracy,
                         "train/lr": scheduler.get_last_lr()[0],
                         "train/global_step": global_step,
@@ -178,11 +190,13 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
                 )
                 loop.set_postfix(
                     {
-                        "loss": loss.item(),
+                        "loss": avg_loss,
                         "token_acc": batch_accuracy,
                         "lr": scheduler.get_last_lr()[0],
                     }
                 )
+
+                accum = {"loss": 0.0, "predictions": [], "labels": [], "count": 0}
 
         model.eval()
         eval_losses = []

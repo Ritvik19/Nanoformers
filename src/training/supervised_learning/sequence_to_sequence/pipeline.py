@@ -135,16 +135,24 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
 
     device = args["device"]
     global_step = 0
+    ga = args["gradient_accumulation_steps"]
+    # Perplexity is derived from the averaged loss (perplexity_from_loss is
+    # convex, so perplexity-of-mean != mean-of-perplexity; the former is the
+    # one that corresponds to the optimizer step we just took).
+    accum = {"loss": 0.0, "count": 0}
     model.train()
     for epoch in range(args["num_epochs"]):
         loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args['num_epochs']}")
         for step, batch in enumerate(loop):
             batch = move_batch_to_device(batch, device)
             loss, _ = forward_loss(model, batch)
-            scaled_loss = loss / args["gradient_accumulation_steps"]
+            scaled_loss = loss / ga
             scaler.scale(scaled_loss).backward()
 
-            if (step + 1) % args["gradient_accumulation_steps"] == 0:
+            accum["loss"] += loss.item()
+            accum["count"] += 1
+
+            if (step + 1) % ga == 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 scaler.step(optimizer)
@@ -153,11 +161,12 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
                 scheduler.step()
                 global_step += 1
 
-                perplexity = perplexity_from_loss(loss.item())
+                avg_loss = accum["loss"] / accum["count"]
+                perplexity = perplexity_from_loss(avg_loss)
 
                 wandb.log(
                     {
-                        "train/loss": loss.item(),
+                        "train/loss": avg_loss,
                         "train/perplexity": perplexity,
                         "train/lr": scheduler.get_last_lr()[0],
                         "train/global_step": global_step,
@@ -167,11 +176,13 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
                 )
                 loop.set_postfix(
                     {
-                        "loss": loss.item(),
+                        "loss": avg_loss,
                         "ppl": perplexity,
                         "lr": scheduler.get_last_lr()[0],
                     }
                 )
+
+                accum = {"loss": 0.0, "count": 0}
 
         model.eval()
         eval_losses = []

@@ -111,16 +111,21 @@ def train(args, model, tokenizer, image_processor, train_loader, eval_loader, op
 
     device = args["device"]
     global_step = 0
+    ga = args["gradient_accumulation_steps"]
+    accum = {"loss": 0.0, "count": 0}
     model.train()
     for epoch in range(args["num_epochs"]):
         loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args['num_epochs']}")
         for step, batch in enumerate(loop):
             batch = move_batch_to_device(batch, device)
             loss = forward_loss(model, batch)
-            scaled_loss = loss / args["gradient_accumulation_steps"]
+            scaled_loss = loss / ga
             scaler.scale(scaled_loss).backward()
 
-            if (step + 1) % args["gradient_accumulation_steps"] == 0:
+            accum["loss"] += loss.item()
+            accum["count"] += 1
+
+            if (step + 1) % ga == 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 scaler.step(optimizer)
@@ -129,9 +134,11 @@ def train(args, model, tokenizer, image_processor, train_loader, eval_loader, op
                 scheduler.step()
                 global_step += 1
 
+                avg_loss = accum["loss"] / accum["count"]
+
                 wandb.log(
                     {
-                        "train/loss": loss.item(),
+                        "train/loss": avg_loss,
                         "train/lr": scheduler.get_last_lr()[0],
                         "train/global_step": global_step,
                         "train/epoch": epoch + (step + 1) / len(train_loader),
@@ -139,8 +146,10 @@ def train(args, model, tokenizer, image_processor, train_loader, eval_loader, op
                     step=global_step,
                 )
                 loop.set_postfix(
-                    {"loss": loss.item(), "lr": scheduler.get_last_lr()[0]}
+                    {"loss": avg_loss, "lr": scheduler.get_last_lr()[0]}
                 )
+
+                accum = {"loss": 0.0, "count": 0}
 
         model.eval()
         eval_losses = []
