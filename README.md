@@ -34,8 +34,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 | Strategy | Scope | Status |
 | :--- | :--- | :---: |
-| **Gradient Accumulation** | Single GPU, larger effective batch | ⬜️ |
-| **Mixed Precision (fp16 / bf16)** | Single GPU, memory & speed | ⬜️ |
+| **Gradient Accumulation** | Single GPU, larger effective batch | ✅ |
+| **Mixed Precision (fp16 / bf16)** | Single GPU, memory & speed | ✅ |
 | **Data Parallelism (DDP)** | Replicate model, shard batch | ⬜️ |
 | **Fully Sharded Data Parallelism (FSDP / ZeRO-3)** | Shard params, grads, optimizer states | ⬜️ |
 | **Tensor Parallelism (TP)** | Shard individual matmuls within a layer | ⬜️ |
@@ -297,6 +297,8 @@ Toggle the variant via [configs/reinforce_qwen_math.yaml](configs/reinforce_qwen
 ### 2026-04-29
 - Added a REINFORCE training module with vLLM rollout server, REINFORCE with baseline, and REINFORCE with KL penalty.
 - Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset resulting in 6% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
+- Fixed gradient-accumulation logging across all training pipelines: each logged scalar now describes the full effective batch (`gradient_accumulation_steps` micro-batches) instead of just the last micro-batch.
+
 
 ### 2026-04-23
 - Standardized automatic mixed precision in all training `forward_loss` implementations: `torch.cuda.amp.autocast` now passes `dtype=torch.bfloat16` (instead of the default float16) whenever CUDA is available. 
