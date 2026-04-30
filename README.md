@@ -350,11 +350,11 @@ PPO-specific knobs in [configs/ppo_qwen_math.yaml](configs/ppo_qwen_math.yaml):
 
 ### 2026-04-30
 - Added a critic-free Proximal Policy Optimization training module that extends REINFORCE with the importance-ratio + clipped surrogate objective `min(r·A, clip(r, 1-ε, 1+ε)·A)`, reuses each rollout batch over `num_ppo_epochs` optimizer steps, and adds `clip_frac` / `approx_kl` / `ratio_mean` diagnostics with optional `target_kl` early stop.
-- Trained `Qwen/Qwen3-0.6B` on `Ritvik19/math-rl` dataset resulting in 10% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
+- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset using PPO resulting in 10% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
 
 ### 2026-04-29
 - Added a REINFORCE training module with vLLM rollout server, REINFORCE with baseline, and REINFORCE with KL penalty.
-- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset resulting in 6% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
+- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset using REINFORCE resulting in 6% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
 - Fixed gradient-accumulation logging across all training pipelines: each logged scalar now describes the full effective batch (`gradient_accumulation_steps` micro-batches) instead of just the last micro-batch.
 
 ### 2026-04-23
