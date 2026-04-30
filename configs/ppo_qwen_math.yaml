@@ -1,0 +1,38 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "Ritvik19/math-rl"
+output_dir: "models/ppo_qwen_math"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "ppo_qwen_math"
+
+# Training settings
+batch_size: 4
+gradient_accumulation_steps: 32
+num_epochs: 3
+learning_rate: 1e-6
+lr_scheduler_type: "cosine"
+max_length: 2560
+device: "cuda"
+
+# PPO settings
+clip_eps: 0.2                      # PPO clipping range epsilon (typical: 0.1 - 0.3)
+num_ppo_epochs: 4                  # gradient steps per rollout effective batch (1 = REINFORCE-with-baseline)
+target_kl: null                    # set to e.g. 0.02 to enable KL-based early stop across PPO inner epochs
+use_baseline: true                 # subtract batch-mean reward from each sequence's reward
+length_normalize: true             # divide per-token loss by completion length before averaging
+kl_coeff: 0.0                      # >0 loads a frozen reference policy and adds a KL-to-ref penalty
+
+# Generation settings (vLLM rollouts)
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 1.0
+top_k: -1
+
+# vLLM client settings
+vllm_base_url: "http://localhost:8000/v1"
+vllm_admin_url: "http://localhost:8000"
+vllm_api_key: "EMPTY"
+vllm_served_model_name: "Qwen/Qwen3-0.6B"
+vllm_sync_every_rollouts: 1        # push policy weights to vLLM every N rollout batches (1 = every batch, 0 = epoch-only)

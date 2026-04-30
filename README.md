@@ -22,7 +22,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Extractive Question Answering | Encoder-only | ✅ |
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ✅ |
 | **Reinforcement** | Reinforce <br> with the following addons: <br> - Baseline <br> - KL Penalty <br> - Length Normalization | Decoder-only | ✅ |
-| | Proximal Policy Optimization | Decoder-only | ⬜️ |
+| | Proximal Policy Optimization | Decoder-only | ✅ |
 | | Group Relative Policy Optimization | Decoder-only | ⬜️ |
 | **Contrastive** | Contrastive Loss | Encoder-only | ✅ |
 | | Triplet Loss | Encoder-only | ✅ |
@@ -73,6 +73,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `bert-base-uncased` | `Ritvik19/open-web-text` | Masked Language Modeling | [mlm_bert_open_web_text.yaml](configs/mlm_bert_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/1jiqkkmp?nw=nwuserritvik19) |
 | `t5-base` | `Ritvik19/open-web-text` | Span Corruption | [span_corruption_t5_base_open_web_text.yaml](configs/span_corruption_t5_base_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/tnotg2s3?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | REINFORCE | [reinforce_qwen_math.yaml](configs/reinforce_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/a2ttdud6?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | Proximal Policy Optimization | [ppo_qwen_math.yaml](configs/ppo_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/23891ele?nw=nwuserritvik19) |
 
 ### Causal Language Modeling (CLM)
 - `text`: string
@@ -137,6 +138,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 ### REINFORCE / REINFORCE with baseline
 - `prompt`: list of dicts (chat messages, same format as IFT)
 - `answer`: string (ground-truth final answer; reward is `1.0` if the model's `\boxed{...}` matches via `math_verify`, else `0.0`)
+
+### Proximal Policy Optimization (PPO)
+- `prompt`: list of dicts (chat messages, same format as IFT)
+- `answer`: string (ground-truth final answer; same `\boxed{...}` + `math_verify` reward as REINFORCE)
 
 
 ## ⚡ Getting Started
@@ -290,15 +295,67 @@ Toggle the variant via [configs/reinforce_qwen_math.yaml](configs/reinforce_qwen
 - `kl_coeff: 0.0` → no reference model (lighter on training-side memory).
   Set `> 0` to load a frozen reference and add a KL-to-reference penalty.
 
+#### Proximal Policy Optimization (PPO)
+
+PPO reuses the exact same vLLM rollout server as REINFORCE
+(`scripts/serve_vllm.sh`), so the two-process layout is identical:
+
+1. **vLLM rollout server** — launched the same way as for REINFORCE:
+
+   ```bash
+   CUDA_VISIBLE_DEVICES=0 bash scripts/serve_vllm.sh
+   ```
+
+2. **PPO trainer** — pulls rollouts from vLLM, snapshots `log π_θ_old` once
+   per rollout batch under `torch.no_grad()`, then runs `num_ppo_epochs`
+   gradient steps over the cached rollouts using the clipped surrogate
+   `min(r·A, clip(r, 1-ε, 1+ε)·A)` with `r = exp(log π_θ - log π_θ_old)`.
+
+```bash
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_ppo.sh
+```
+
+   Or directly:
+
+```bash
+python -m src.cli.train_ppo --config configs/ppo_qwen_math.yaml
+```
+
+PPO-specific knobs in [configs/ppo_qwen_math.yaml](configs/ppo_qwen_math.yaml):
+
+- `clip_eps: 0.2` → PPO clipping range epsilon. Typical values are `0.1 - 0.3`.
+  Smaller values keep the policy closer to the rollout policy at the price of
+  slower learning; larger values are more aggressive but risk instability.
+- `num_ppo_epochs: 4` → number of optimizer steps taken per rollout
+  effective batch (the whole point of PPO over REINFORCE). Set to `1` to
+  reduce PPO to REINFORCE-with-baseline (importance ratio is identically `1`
+  on the only inner pass, so the clip is inactive).
+- `target_kl: null` → optional KL-based early stop. Set to e.g. `0.02` to
+  abort the remaining PPO inner epochs when the approximate KL between the
+  current and rollout-time policies exceeds this threshold. Acts as a soft
+  trust-region constraint on top of the clip.
+- `use_baseline`, `length_normalize`, `kl_coeff` → identical semantics to
+  REINFORCE. The baseline is computed over the **full rollout effective
+  batch** (`batch_size × gradient_accumulation_steps`) rather than the
+  micro-batch, since PPO already caches all rollouts before computing
+  advantages.
+- `vllm_sync_every_rollouts: 1` → push policy weights to vLLM every N
+  rollout batches (1 = every batch, 0 = epoch-only). The natural unit for
+  PPO is the rollout batch rather than the optimizer step, since each
+  rollout drives `num_ppo_epochs` optimizer steps.
+
 ---
 
 ## 📰 Update Log
+
+### 2026-04-30
+- Added a critic-free Proximal Policy Optimization training module that extends REINFORCE with the importance-ratio + clipped surrogate objective `min(r·A, clip(r, 1-ε, 1+ε)·A)`, reuses each rollout batch over `num_ppo_epochs` optimizer steps, and adds `clip_frac` / `approx_kl` / `ratio_mean` diagnostics with optional `target_kl` early stop.
+- Trained `Qwen/Qwen3-0.6B` on `Ritvik19/math-rl` dataset resulting in 10% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
 
 ### 2026-04-29
 - Added a REINFORCE training module with vLLM rollout server, REINFORCE with baseline, and REINFORCE with KL penalty.
 - Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset resulting in 6% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
 - Fixed gradient-accumulation logging across all training pipelines: each logged scalar now describes the full effective batch (`gradient_accumulation_steps` micro-batches) instead of just the last micro-batch.
-
 
 ### 2026-04-23
 - Standardized automatic mixed precision in all training `forward_loss` implementations: `torch.cuda.amp.autocast` now passes `dtype=torch.bfloat16` (instead of the default float16) whenever CUDA is available. 
