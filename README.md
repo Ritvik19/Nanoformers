@@ -23,7 +23,7 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | | Sequence-to-Sequence Modeling | Encoder-Decoder | ✅ |
 | **Reinforcement** | Reinforce <br> with the following addons: <br> - Baseline <br> - KL Penalty <br> - Length Normalization | Decoder-only | ✅ |
 | | Proximal Policy Optimization | Decoder-only | ✅ |
-| | Group Relative Policy Optimization | Decoder-only | ⬜️ |
+| | Group Relative Policy Optimization <br> with toggles for: <br> - DAPO (Clip-Higher + token-level loss) <br> - Dr. GRPO (no std normalization + token-level loss) <br> - GSPO (sequence-level importance ratio) | Decoder-only | ✅ |
 | **Contrastive** | Contrastive Loss | Encoder-only | ✅ |
 | | Triplet Loss | Encoder-only | ✅ |
 | | InfoNCE Loss | Encoder-only | ✅ |
@@ -74,6 +74,14 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 | `t5-base` | `Ritvik19/open-web-text` | Span Corruption | [span_corruption_t5_base_open_web_text.yaml](configs/span_corruption_t5_base_open_web_text.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/tnotg2s3?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | REINFORCE | [reinforce_qwen_math.yaml](configs/reinforce_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/a2ttdud6?nw=nwuserritvik19) |
 | `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | Proximal Policy Optimization | [ppo_qwen_math.yaml](configs/ppo_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/23891ele?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | GRPO | [grpo_qwen_math.yaml](configs/grpo_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/of3lqzyc?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | DAPO | [dapo_qwen_math.yaml](configs/dapo_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/j0rdxxeg?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | Dr. GRPO | [dr_grpo_qwen_math.yaml](configs/dr_grpo_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/p9w90aoz?nw=nwuserritvik19) |
+| `Qwen/Qwen3-0.6B` | `Ritvik19/math-rl` | GSPO | [gspo_qwen_math.yaml](configs/gspo_qwen_math.yaml) | [wandb](https://wandb.ai/ritvik19/nanoformers/runs/1ihsqjgn?nw=nwuserritvik19) |
+
+---
+
+## 📝 Data Format
 
 ### Causal Language Modeling (CLM)
 - `text`: string
@@ -140,6 +148,10 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 - `answer`: string (ground-truth final answer; reward is `1.0` if the model's `\boxed{...}` matches via `math_verify`, else `0.0`)
 
 ### Proximal Policy Optimization (PPO)
+- `prompt`: list of dicts (chat messages, same format as IFT)
+- `answer`: string (ground-truth final answer; same `\boxed{...}` + `math_verify` reward as REINFORCE)
+
+### Group Relative Policy Optimization (GRPO / DAPO / Dr. GRPO / GSPO)
 - `prompt`: list of dicts (chat messages, same format as IFT)
 - `answer`: string (ground-truth final answer; same `\boxed{...}` + `math_verify` reward as REINFORCE)
 
@@ -344,9 +356,123 @@ PPO-specific knobs in [configs/ppo_qwen_math.yaml](configs/ppo_qwen_math.yaml):
   PPO is the rollout batch rather than the optimizer step, since each
   rollout drives `num_ppo_epochs` optimizer steps.
 
+#### Group Relative Policy Optimization (GRPO / DAPO / Dr. GRPO / GSPO)
+
+GRPO drops PPO's value-head baseline and replaces it with a *group-relative*
+advantage: for every prompt, sample G completions from vLLM, score each one,
+and centre each reward against the mean of its own group. The clipped
+surrogate is otherwise identical to PPO. The same module also covers DAPO,
+Dr. GRPO and GSPO via four orthogonal toggles, so you can run all four
+algorithms from one config.
+
+The two-process layout is identical to PPO/REINFORCE — same vLLM server:
+
+1. **vLLM rollout server** — launched the same way:
+
+   ```bash
+   CUDA_VISIBLE_DEVICES=0 bash scripts/serve_vllm.sh
+   ```
+
+2. **GRPO trainer** — pulls G completions per prompt from vLLM, computes
+   group-relative advantages, snapshots `log π_θ_old` once per rollout under
+   `torch.no_grad()`, then runs `num_grpo_epochs` gradient steps over the
+   cached rollouts using the clipped surrogate (token- or sequence-level
+   importance ratio).
+
+```bash
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_grpo.sh
+```
+
+   Or directly:
+
+```bash
+python -m src.cli.train_grpo --config configs/grpo_qwen_math.yaml
+```
+
+GRPO-specific knobs in [configs/grpo_qwen_math.yaml](configs/grpo_qwen_math.yaml):
+
+- `group_size: 8` → G, the number of completions sampled per prompt. Must be
+  `>= 2` (the group baseline is ill-defined for `G=1`; use the REINFORCE
+  pipeline instead).
+- `importance_ratio_level: "token" | "sequence"` →
+  - `"token"` uses the standard per-token ratio
+    `r_t = exp(log π_θ(y_t) − log π_old(y_t))` and clips per token
+    (PPO / GRPO / DAPO / Dr. GRPO).
+  - `"sequence"` uses GSPO's length-normalised per-sequence ratio
+    `r̂ = exp((1/|y|) Σ_t mask_t · (log π_θ − log π_old))`
+    (i.e. the geometric mean of per-token ratios) and clips that single
+    scalar per sequence. The gradient still flows through every per-token
+    log-prob, but clipping decisions are made once per sequence. When this
+    is `"sequence"`, `loss_aggregation` is ignored (the surrogate is already
+    one scalar per sequence; loss is just the mean over sequences).
+- `clip_low: 0.2`, `clip_high: 0.2` → asymmetric PPO clip bounds (DAPO
+  "Clip-Higher"). Setting them equal recovers a symmetric clip. Note the
+  natural scale changes with `importance_ratio_level`: per-token ratios
+  drift fast (typical clip ~0.2), per-sequence ratios drift much more
+  slowly (GSPO paper uses ~3e-4) — retune when switching modes.
+- `loss_aggregation: "sequence" | "token"` →
+  - `"sequence"` divides each sequence's per-token loss by `|y_i|` before
+    averaging across the batch (canonical GRPO / PPO).
+  - `"token"` sums per-token loss across the whole batch and divides by
+    `sum(mask)` (DAPO / Dr. GRPO) — removes the per-sequence length-
+    normalisation bias so longer sequences contribute proportionally more.
+- `std_normalize: true` → divide the centered advantage by the group std
+  (canonical GRPO). Set `false` for Dr. GRPO, which removes the std-
+  normalisation bias that penalises harder questions (higher variance).
+- `num_grpo_epochs: 1` → number of optimizer steps taken per rollout
+  effective batch. Set `>1` to take multiple PPO-style passes over the same
+  rollouts (the importance ratio + clip stops the policy drifting too far).
+- `target_kl: null` → optional KL-based early stop. Set to e.g. `0.02` to
+  abort the remaining GRPO inner epochs when the approximate KL (k3) between
+  current and rollout-time policies exceeds this threshold.
+- `kl_coeff: 0.0` → identical semantics to REINFORCE/PPO. `>0` loads a
+  frozen reference policy and adds a KL-to-reference penalty.
+- `vllm_sync_every_rollouts: 1` → identical semantics to PPO.
+
+Preset recipes — all four are shipped as standalone configs and run with the
+same trainer. Override the config from the launcher with the `CONFIG` env var
+(or pass `--config` to the CLI directly):
+
+| Algorithm | Config | Launcher | Toggle settings |
+| :--- | :--- | :--- | :--- |
+| **GRPO** | [configs/grpo_qwen_math.yaml](configs/grpo_qwen_math.yaml) | [scripts/train_grpo.sh](scripts/train_grpo.sh) | `importance_ratio_level=token`, `loss_aggregation=sequence`, `clip_low=clip_high=0.2`, `std_normalize=true` |
+| **Dr. GRPO** | [configs/dr_grpo_qwen_math.yaml](configs/dr_grpo_qwen_math.yaml) | [scripts/train_dr_grpo.sh](scripts/train_dr_grpo.sh) | `importance_ratio_level=token`, `loss_aggregation=token`, `clip_low=clip_high=0.2`, `std_normalize=false` |
+| **DAPO** | [configs/dapo_qwen_math.yaml](configs/dapo_qwen_math.yaml) | [scripts/train_dapo.sh](scripts/train_dapo.sh) | `importance_ratio_level=token`, `loss_aggregation=token`, `clip_low=0.2`, `clip_high=0.28`, `std_normalize=true` |
+| **GSPO** | [configs/gspo_qwen_math.yaml](configs/gspo_qwen_math.yaml) | [scripts/train_gspo.sh](scripts/train_gspo.sh) | `importance_ratio_level=sequence`, `loss_aggregation=(ignored)`, `clip_low=clip_high=3e-4`, `std_normalize=true` |
+
+Each launcher is a thin `python -m src.cli.train_grpo --config <config>` wrapper —
+the trainer is shared across all four algorithms; only the config switches the
+toggles. Launch each on its own GPU:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_grpo.sh      # GRPO
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_dr_grpo.sh   # Dr. GRPO
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_dapo.sh      # DAPO
+CUDA_VISIBLE_DEVICES=1 bash scripts/train_gspo.sh      # GSPO
+```
+
+Override the default config on any launcher with the `CONFIG` env var
+(e.g. `CONFIG=configs/my_dapo_variant.yaml bash scripts/train_dapo.sh`), or
+call the CLI directly with `python -m src.cli.train_grpo --config <path>`.
+
 ---
 
 ## 📰 Update Log
+
+### 2026-05-06
+- Trained `Qwen/Qwen3-0.6B` on `Ritvik19/math-rl` dataset using GSPO resulting in 10% lift in pass@1 accuracy (average of 4) on `Ritvik19/math-rl`.
+
+### 2026-05-05
+- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset using Dr. GRPO resulting in 11% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
+
+### 2026-05-03
+- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset using DAPO resulting in 11% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
+
+### 2026-05-02
+- Trained `Qwen/Qwen3-0.6B` on `rasbt/math_full_minus_math500` dataset using GRPO resulting in 10% lift in pass@1 accuracy (average of 4) on `HuggingFaceH4/MATH-500`.
+
+### 2026-05-01
+- Added a Group Relative Policy Optimization training module that drops PPO's value-head baseline in favour of a per-group baseline (`R_i − mean(R_group)`, optionally `/ std(R_group)`) computed over `group_size` completions per prompt, and exposes four orthogonal toggles so the same loss covers GRPO, DAPO ("Clip-Higher" + token-level loss), Dr. GRPO (no std normalisation + token-level loss) and GSPO (length-normalised per-sequence importance ratio + per-sequence clipping).
 
 ### 2026-04-30
 - Added a critic-free Proximal Policy Optimization training module that extends REINFORCE with the importance-ratio + clipped surrogate objective `min(r·A, clip(r, 1-ε, 1+ε)·A)`, reuses each rollout batch over `num_ppo_epochs` optimizer steps, and adds `clip_frac` / `approx_kl` / `ratio_mean` diagnostics with optional `target_kl` early stop.

@@ -1,0 +1,51 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "Ritvik19/math-rl"
+output_dir: "models/gspo_qwen_math"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "gspo_qwen_math"
+
+# Training settings
+batch_size: 1
+gradient_accumulation_steps: 128
+num_epochs: 2
+learning_rate: 1e-6
+lr_scheduler_type: "cosine"
+max_length: 2560
+device: "cuda"
+
+# GSPO settings — group sampling + group-relative advantages identical to GRPO,
+# but the importance ratio is computed once per sequence:
+#   r_hat_i = exp( (1/|y_i|) * sum_t mask_{i,t} * (log pi_theta - log pi_old) )
+# i.e. the geometric mean of per-token ratios. Clipping is then applied to that
+# scalar per sequence. The gradient still flows through every per-token log-prob
+# but clipping decisions are made at sequence granularity.
+group_size: 4                        # G — number of completions sampled per prompt (G >= 2)
+importance_ratio_level: "sequence"   # GSPO: length-normalised per-sequence ratio
+# Per-sequence ratios drift far more slowly than per-token ratios, so the clip
+# range needs to be ~3 orders of magnitude tighter than PPO/GRPO/DAPO. The GSPO
+# paper uses ~3e-4 for both bounds.
+clip_low: 3e-4
+clip_high: 3e-4
+# loss_aggregation intentionally omitted: it's ignored under
+# importance_ratio_level=sequence, so setting it would just print a warning
+# at startup. The loss is naturally one scalar per sequence (mean over batch).
+std_normalize: true                  # GSPO retains GRPO-style group std normalisation
+num_grpo_epochs: 1
+target_kl: null
+kl_coeff: 0.0
+
+# Generation settings (vLLM rollouts)
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 1.0
+top_k: -1
+
+# vLLM client settings
+vllm_base_url: "http://localhost:8000/v1"
+vllm_admin_url: "http://localhost:8000"
+vllm_api_key: "EMPTY"
+vllm_served_model_name: "Qwen/Qwen3-0.6B"
+vllm_sync_every_rollouts: 1

@@ -1,0 +1,43 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "Ritvik19/math-rl"
+output_dir: "models/dr_grpo_qwen_math"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "dr_grpo_qwen_math"
+
+# Training settings
+batch_size: 1
+gradient_accumulation_steps: 128
+num_epochs: 2
+learning_rate: 1e-6
+lr_scheduler_type: "cosine"
+max_length: 2560
+device: "cuda"
+
+# Dr. GRPO settings — drops both of GRPO's biases:
+#   - std_normalize=false   removes the "harder questions get penalised" bias
+#   - loss_aggregation=token removes the per-sequence length-normalisation bias
+group_size: 4                        # G — number of completions sampled per prompt (G >= 2)
+importance_ratio_level: "token"      # standard per-token PPO-style ratio
+clip_low: 0.2                        # symmetric clip
+clip_high: 0.2                       # symmetric clip
+loss_aggregation: "token"            # sum per-token loss / sum(mask) over the whole batch
+std_normalize: false                 # Dr. GRPO: NO std division
+num_grpo_epochs: 1
+target_kl: null
+kl_coeff: 0.0
+
+# Generation settings (vLLM rollouts)
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 1.0
+top_k: -1
+
+# vLLM client settings
+vllm_base_url: "http://localhost:8000/v1"
+vllm_admin_url: "http://localhost:8000"
+vllm_api_key: "EMPTY"
+vllm_served_model_name: "Qwen/Qwen3-0.6B"
+vllm_sync_every_rollouts: 1

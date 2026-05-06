@@ -1,0 +1,41 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "Ritvik19/math-rl"
+output_dir: "models/grpo_qwen_math"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "grpo_qwen_math"
+
+# Training settings
+batch_size: 1
+gradient_accumulation_steps: 128
+num_epochs: 2
+learning_rate: 1e-6
+lr_scheduler_type: "cosine"
+max_length: 2560
+device: "cuda"
+
+# GRPO settings
+group_size: 4                        # G — number of completions sampled per prompt (G >= 2)
+importance_ratio_level: "token"      # "token" (GRPO/DAPO/Dr.GRPO) | "sequence" (GSPO)
+clip_low: 0.2                        # clip lower bound (epsilon_low) — GSPO typically uses ~3e-4
+clip_high: 0.2                       # clip upper bound (epsilon_high) — DAPO uses ~0.28
+loss_aggregation: "sequence"         # "sequence" (GRPO) | "token" (DAPO / Dr. GRPO); ignored when importance_ratio_level=sequence
+std_normalize: true                  # divide centered advantage by group std (Dr. GRPO = false)
+num_grpo_epochs: 1                   # gradient steps per rollout effective batch (1 = on-policy)
+target_kl: null                      # set to e.g. 0.02 to enable KL-based early stop across GRPO inner epochs
+kl_coeff: 0.0                        # >0 loads a frozen reference policy and adds a KL-to-ref penalty
+
+# Generation settings (vLLM rollouts)
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 1.0
+top_k: -1
+
+# vLLM client settings
+vllm_base_url: "http://localhost:8000/v1"
+vllm_admin_url: "http://localhost:8000"
+vllm_api_key: "EMPTY"
+vllm_served_model_name: "Qwen/Qwen3-0.6B"
+vllm_sync_every_rollouts: 1          # push policy weights to vLLM every N rollout batches (1 = every batch, 0 = epoch-only)
