@@ -2,7 +2,11 @@ import torch
 import wandb
 from tqdm.auto import tqdm
 
-from src.training.common.checkpointing import save_checkpoint, save_transient_checkpoint
+from src.training.common.checkpointing import (
+    save_checkpoint,
+    save_peft_checkpoint,
+    save_transient_checkpoint,
+)
 from src.training.common.config import load_config
 from src.training.common.io import (
     load_causal_lm_model,
@@ -15,6 +19,13 @@ from src.training.common.optim import (
     build_optimizer,
     build_scheduler,
 )
+from src.training.common.peft import (
+    apply_peft_to_model,
+    build_quantization_config,
+    peft_enabled,
+    qlora_enabled,
+    use_disable_adapter_as_ref,
+)
 from src.training.common.trainer import build_dataloaders
 from src.training.common.utils import (
     compute_test_size,
@@ -26,6 +37,7 @@ from src.training.reinforcement_learning.policy_utils import (
     compute_kl_penalty,
     compute_per_token_log_probs,
     compute_per_token_log_probs_from_ref,
+    compute_per_token_log_probs_from_ref_via_adapter,
 )
 from src.training.reinforcement_learning.reinforce.loss import (
     forward_loss,
@@ -36,6 +48,7 @@ from src.training.reinforcement_learning.tokenization import prepare_training_ba
 from src.training.reinforcement_learning.vllm_client import (
     build_openai_client,
     generate_rollouts,
+    reload_lora_adapter,
     reload_weights,
     reset_prefix_cache,
     wait_for_server,
@@ -45,12 +58,19 @@ from src.training.reinforcement_learning.vllm_client import (
 def load_model_and_tokenizer(args):
     print("Loading model and tokenizer...")
     tokenizer = load_tokenizer(args["model_path"])
-    model = load_causal_lm_model(args["model_path"], args["device"], load_weights=True)
+    qcfg = build_quantization_config(args)
+    model = load_causal_lm_model(
+        args["model_path"], args["device"], load_weights=True, quantization_config=qcfg
+    )
+    model = apply_peft_to_model(model, args, task_type="CAUSAL_LM")
 
     ref_model = None
     if float(args.get("kl_coeff", 0.0)) > 0.0:
-        print("Loading reference model (kl_coeff > 0)...")
-        ref_model = load_reference_model(args["model_path"], args["device"])
+        if use_disable_adapter_as_ref(args):
+            print("PEFT enabled — KL ref will be computed via disable_adapter().")
+        else:
+            print("Loading reference model (kl_coeff > 0)...")
+            ref_model = load_reference_model(args["model_path"], args["device"])
 
     print("Model and tokenizer loaded...")
     return model, ref_model, tokenizer
@@ -83,7 +103,7 @@ def load_and_prepare_dataset(args, tokenizer):
 
 def prepare_optimizer_scaler_and_scheduler(args, model, train_loader):
     print("Preparing optimizer, scaler, and scheduler...")
-    optimizer = build_optimizer(model, args["learning_rate"])
+    optimizer = build_optimizer(model, args["learning_rate"], paged=qlora_enabled(args))
     scaler = build_grad_scaler()
     scheduler = build_scheduler(args, optimizer, len(train_loader))
     print("Optimizer, scaler, and scheduler prepared...")
@@ -95,9 +115,16 @@ def _compute_step(args, model, ref_model, tokenizer, batch, device, sampling):
     # decoding by overriding just temperature/top_p without losing the top_k.
     temperature, top_p, top_k = sampling
 
+    # When PEFT is enabled the LoRA adapter name is used as the served model so
+    # vLLM routes the request to the correct adapter rather than the bare base.
+    _vllm_model = (
+        args.get("peft", {}).get("vllm_lora_name", "peft_adapter")
+        if peft_enabled(args)
+        else args["vllm_served_model_name"]
+    )
     completions = generate_rollouts(
         client=sampling_state["client"],
-        model=args["vllm_served_model_name"],
+        model=_vllm_model,
         prompts=batch["prompts"],
         max_new_tokens=args["max_new_tokens"],
         temperature=temperature,
@@ -127,6 +154,11 @@ def _compute_step(args, model, ref_model, tokenizer, batch, device, sampling):
     if ref_model is not None:
         ref_logps, _ = compute_per_token_log_probs_from_ref(
             ref_model, tensors["input_ids"], tensors["attention_mask"]
+        )
+        kl_value = compute_kl_penalty(policy_logps, ref_logps, effective_mask)
+    elif peft_enabled(args) and float(args.get("kl_coeff", 0.0)) > 0.0:
+        ref_logps, _ = compute_per_token_log_probs_from_ref_via_adapter(
+            model, tensors["input_ids"], tensors["attention_mask"]
         )
         kl_value = compute_kl_penalty(policy_logps, ref_logps, effective_mask)
 
@@ -197,6 +229,17 @@ def train(
         base_url=args["vllm_base_url"],
         api_key=args.get("vllm_api_key", "EMPTY"),
     )
+
+    # Push the initial adapter to vLLM before the first rollout. Without this
+    # the server only knows the base model name and would return 404 on the
+    # first generate_rollouts call when `vllm_lora_name` is used as the model.
+    if peft_enabled(args):
+        lora_name = args.get("peft", {}).get("vllm_lora_name", "peft_adapter")
+        print(f"Uploading initial LoRA adapter '{lora_name}' to vLLM...")
+        init_sync_path = save_transient_checkpoint(model, tokenizer, args["output_dir"])
+        reload_lora_adapter(args["vllm_admin_url"], init_sync_path, lora_name)
+        reset_prefix_cache(args["vllm_admin_url"])
+        print("Initial LoRA adapter uploaded.")
 
     device = args["device"]
     top_k = args.get("top_k")
@@ -288,7 +331,11 @@ def train(
                     sync_path = save_transient_checkpoint(
                         model, tokenizer, args["output_dir"]
                     )
-                    reload_weights(args["vllm_admin_url"], sync_path)
+                    if peft_enabled(args):
+                        lora_name = args.get("peft", {}).get("vllm_lora_name", "peft_adapter")
+                        reload_lora_adapter(args["vllm_admin_url"], sync_path, lora_name)
+                    else:
+                        reload_weights(args["vllm_admin_url"], sync_path)
                     reset_prefix_cache(args["vllm_admin_url"])
 
         model.eval()
@@ -316,7 +363,10 @@ def train(
             f"Epoch {epoch + 1} - Eval reward: {avg_eval_reward:.4f} - Eval KL: {avg_eval_kl:.4f}"
         )
 
-        checkpoint_path = save_checkpoint(model, tokenizer, args["output_dir"], epoch + 1)
+        checkpoint_path = save_peft_checkpoint(
+            model, tokenizer, args["output_dir"], epoch + 1,
+            save_mode=args.get("peft", {}).get("save_mode", "adapter"),
+        )
 
         # If mid-epoch sync is disabled (sync_every <= 0), vLLM is still on
         # last-epoch weights at this point, so push the freshly-saved persistent
@@ -324,7 +374,11 @@ def train(
         # last in-loop sync, so skip the redundant reload.
         if sync_every <= 0:
             print(f"Syncing vLLM weights from {checkpoint_path}...")
-            reload_weights(args["vllm_admin_url"], checkpoint_path)
+            if peft_enabled(args):
+                lora_name = args.get("peft", {}).get("vllm_lora_name", "peft_adapter")
+                reload_lora_adapter(args["vllm_admin_url"], checkpoint_path, lora_name)
+            else:
+                reload_weights(args["vllm_admin_url"], checkpoint_path)
             reset_prefix_cache(args["vllm_admin_url"])
         model.train()
 

@@ -13,6 +13,6 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-CONFIG=${CONFIG:-configs/ppo_qwen_math.yaml}
+CONFIG=${CONFIG:-configs/lora/ppo_qwen_math_lora.yaml}
 
 exec python -m src.cli.train_ppo --config "$CONFIG"

@@ -1,0 +1,30 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B-Base"
+dataset_path: "Ritvik19/gsm8k-onpolicy-Qwen3-0.6B-cpt"
+output_dir: "models/clm_qwen_gsm8k_lora"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "clm_qwen_gsm8k_lora"
+
+# Training settings
+batch_size: 16
+gradient_accumulation_steps: 1
+num_epochs: 2
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 1024
+device: "cuda"
+load_weights: true
+bos_token_id: None
+
+# LoRA / QLoRA settings
+peft:
+  use_lora: true
+  use_qlora: false          # flip to true to enable QLoRA (4-bit NF4)
+  r: 128
+  alpha: 256
+  dropout: 0.05
+  target_modules: null      # auto-inferred for Qwen: [q_proj, k_proj, v_proj, o_proj]
+  modules_to_save: null
+  save_mode: "adapter"      # "adapter" | "merged" | "both"

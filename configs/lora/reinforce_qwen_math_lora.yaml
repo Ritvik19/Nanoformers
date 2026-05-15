@@ -1,0 +1,51 @@
+env_path: ".env"
+model_path: "Qwen/Qwen3-0.6B"
+dataset_path: "Ritvik19/math-rl"
+output_dir: "models/reinforce_qwen_math_lora"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "reinforce_qwen_math_lora"
+
+# Training settings
+batch_size: 4
+gradient_accumulation_steps: 32
+num_epochs: 2
+learning_rate: 1e-6
+lr_scheduler_type: "cosine"
+max_length: 2560
+device: "cuda"
+
+# REINFORCE settings
+use_baseline: true
+length_normalize: true
+kl_coeff: 0.0
+
+# Generation settings (vLLM rollouts)
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 1.0
+top_k: -1
+
+# vLLM client settings
+# Start vLLM with: ENABLE_LORA=1 bash scripts/serve_vllm.sh
+vllm_base_url: "http://localhost:8000/v1"
+vllm_admin_url: "http://localhost:8000"
+vllm_api_key: "EMPTY"
+vllm_served_model_name: "Qwen/Qwen3-0.6B"
+vllm_sync_every_steps: 1
+
+# LoRA / QLoRA settings
+# The vLLM base model stays loaded; only the adapter weights are synced.
+# use_disable_adapter_as_ref: true is the default when kl_coeff > 0.
+peft:
+  use_lora: true
+  use_qlora: false
+  r: 128
+  alpha: 256
+  dropout: 0.05
+  target_modules: null
+  modules_to_save: null
+  save_mode: "adapter"
+  use_disable_adapter_as_ref: true
+  vllm_lora_name: "reinforce_lora"   # name used when routing vLLM completions to this adapter

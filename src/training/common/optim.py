@@ -5,7 +5,17 @@ import torch
 from transformers import get_scheduler
 
 
-def build_optimizer(model, learning_rate):
+def build_optimizer(model, learning_rate, paged: bool = False):
+    """Build an AdamW optimizer for *model*.
+
+    Args:
+        model: the (possibly PEFT-wrapped) model whose parameters are optimized.
+        learning_rate: base learning rate.
+        paged: when True, use PagedAdamW8bit so optimizer state can page to CPU
+            memory.  Set this to True for QLoRA runs (qlora_enabled(args)).
+    """
+    if paged:
+        return bnb.optim.PagedAdamW8bit(model.parameters(), lr=float(learning_rate))
     return bnb.optim.AdamW8bit(model.parameters(), lr=float(learning_rate))
 
 

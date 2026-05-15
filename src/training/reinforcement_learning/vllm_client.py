@@ -5,6 +5,7 @@ small `httpx` wrapper for vLLM's admin endpoints (`/health`, `/collective_rpc`,
 `/reset_prefix_cache`).
 """
 
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -113,6 +114,51 @@ def reload_weights(admin_url, checkpoint_path, timeout_s=600):
     )
     resp.raise_for_status()
     return resp.json() if resp.content else None
+
+
+def reload_lora_adapter(admin_url, adapter_path, lora_name, timeout_s=120):
+    """Tell the vLLM server to hot-swap the LoRA adapter.
+
+    Uses vLLM's /v1/load_lora_adapter endpoint which registers the adapter
+    with both the GPU worker *and* the API serving engine's model registry.
+    Using collective_rpc → model_runner.add_lora() only touches the worker and
+    leaves the serving layer unaware, causing 404s on completion requests.
+
+    An unload is attempted first so that repeated syncs during training always
+    replace the slot cleanly (the same path is overwritten each sync step).
+    Requires the vLLM server to have been started with --enable-lora and
+    VLLM_ALLOW_RUNTIME_LORA_UPDATING=True.
+
+    Args:
+        admin_url:    e.g. "http://localhost:8000"
+        adapter_path: path to the saved PeftModel adapter directory
+                      (the one that contains adapter_model.safetensors).
+                      Will be resolved to an absolute path.
+        lora_name:    an arbitrary string identifier for the adapter;
+                      rollout calls should pass this as the `model` argument.
+        timeout_s:    request timeout.
+    """
+    adapter_path = os.path.abspath(adapter_path)
+
+    # Unload the previous version if it exists so the reload is always clean.
+    # Ignore 404 (first-time load) and any other non-fatal errors.
+    try:
+        httpx.post(
+            f"{admin_url}/v1/unload_lora_adapter",
+            json={"lora_name": lora_name},
+            timeout=30.0,
+        )
+    except Exception:
+        pass
+
+    resp = httpx.post(
+        f"{admin_url}/v1/load_lora_adapter",
+        json={"lora_name": lora_name, "lora_path": adapter_path},
+        timeout=timeout_s,
+    )
+    resp.raise_for_status()
+    # vLLM returns a plain-text success message, not JSON.
+    return resp.text if resp.content else None
 
 
 def reset_prefix_cache(admin_url, timeout_s=60):

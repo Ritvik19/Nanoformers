@@ -32,6 +32,10 @@ def forward_loss(model, ref_model, batch, beta):
     # - "rejected" is y_l (the dispreferred completion)
     # - per_example_sum_logprob(...) gives the sequence log-probability term
     #   log pi(... | x) by summing token log-probs over the target completion.
+    #
+    # When ref_model is None the reference log-probs are computed from `model`
+    # with the LoRA adapter disabled via model.disable_adapter() — this is the
+    # PEFT / QLoRA-friendly alternative to a separate frozen copy.
     with torch.cuda.amp.autocast(
         enabled=torch.cuda.is_available(),
         dtype=torch.bfloat16,
@@ -48,16 +52,30 @@ def forward_loss(model, ref_model, batch, beta):
         ).logits
 
         with torch.no_grad():
-            ref_chosen_logits = ref_model(
-                input_ids=batch["chosen_input_ids"],
-                attention_mask=batch["chosen_attention_mask"],
-                return_dict=True,
-            ).logits
-            ref_rejected_logits = ref_model(
-                input_ids=batch["rejected_input_ids"],
-                attention_mask=batch["rejected_attention_mask"],
-                return_dict=True,
-            ).logits
+            if ref_model is None:
+                # PEFT path: temporarily disable the adapter to get base-model logits.
+                with model.disable_adapter():
+                    ref_chosen_logits = model(
+                        input_ids=batch["chosen_input_ids"],
+                        attention_mask=batch["chosen_attention_mask"],
+                        return_dict=True,
+                    ).logits
+                    ref_rejected_logits = model(
+                        input_ids=batch["rejected_input_ids"],
+                        attention_mask=batch["rejected_attention_mask"],
+                        return_dict=True,
+                    ).logits
+            else:
+                ref_chosen_logits = ref_model(
+                    input_ids=batch["chosen_input_ids"],
+                    attention_mask=batch["chosen_attention_mask"],
+                    return_dict=True,
+                ).logits
+                ref_rejected_logits = ref_model(
+                    input_ids=batch["rejected_input_ids"],
+                    attention_mask=batch["rejected_attention_mask"],
+                    return_dict=True,
+                ).logits
 
         # Convert token logits into log-probabilities so we can recover the
         # sequence-level log pi(y | x) terms that appear in the DPO equation.

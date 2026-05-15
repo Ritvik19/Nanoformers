@@ -1,0 +1,31 @@
+env_path: ".env"
+model_path: "distilbert/distilbert-base-uncased"
+dataset_path: "Ritvik19/qqp-info_nce"
+output_dir: "models/info_nce_loss_distilbert_qqp_lora"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "info_nce_loss_distilbert_qqp_lora"
+
+# Training settings
+batch_size: 128
+gradient_accumulation_steps: 1
+num_epochs: 10
+learning_rate: 2e-5
+lr_scheduler_type: "cosine"
+max_length: 512
+device: "cuda"
+
+# InfoNCE loss settings
+temperature: 0.07
+
+# LoRA / QLoRA settings
+peft:
+  use_lora: true
+  use_qlora: false
+  r: 128
+  alpha: 256
+  dropout: 0.05
+  target_modules: null
+  modules_to_save: null
+  save_mode: "adapter"

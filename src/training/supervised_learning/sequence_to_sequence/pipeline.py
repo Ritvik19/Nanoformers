@@ -2,7 +2,7 @@ import torch
 import wandb
 from tqdm.auto import tqdm
 
-from src.training.common.checkpointing import save_checkpoint
+from src.training.common.checkpointing import save_checkpoint, save_peft_checkpoint
 from src.training.common.config import load_config
 from src.training.common.io import (
     load_sequence_to_sequence_model,
@@ -13,6 +13,11 @@ from src.training.common.optim import (
     build_grad_scaler,
     build_optimizer,
     build_scheduler,
+)
+from src.training.common.peft import (
+    apply_peft_to_model,
+    build_quantization_config,
+    qlora_enabled,
 )
 from src.training.common.trainer import build_dataloaders
 from src.training.common.utils import (
@@ -99,18 +104,21 @@ def load_and_prepare_dataset(args, tokenizer):
 
 def load_model(args):
     print("Loading model...")
+    qcfg = build_quantization_config(args)
     model = load_sequence_to_sequence_model(
         args["model_path"],
         args["device"],
         load_weights=args.get("load_weights", True),
+        quantization_config=qcfg,
     )
+    model = apply_peft_to_model(model, args, task_type="SEQ_2_SEQ_LM")
     print("Model loaded...")
     return model
 
 
 def prepare_optimizer_scaler_and_scheduler(args, model, train_loader):
     print("Preparing optimizer, scaler, and scheduler...")
-    optimizer = build_optimizer(model, args["learning_rate"])
+    optimizer = build_optimizer(model, args["learning_rate"], paged=qlora_enabled(args))
     scaler = build_grad_scaler()
     scheduler = build_scheduler(args, optimizer, len(train_loader))
     print("Optimizer, scaler, and scheduler prepared...")
@@ -207,7 +215,10 @@ def train(args, model, tokenizer, train_loader, eval_loader, optimizer, scaler, 
             f"Epoch {epoch + 1} - Eval Loss: {avg_eval_loss:.4f} - Eval Perplexity: {eval_perplexity:.4f}"
         )
 
-        save_checkpoint(model, tokenizer, args["output_dir"], epoch + 1)
+        save_peft_checkpoint(
+            model, tokenizer, args["output_dir"], epoch + 1,
+            save_mode=args.get("peft", {}).get("save_mode", "adapter"),
+        )
         model.train()
 
     wandb.finish()

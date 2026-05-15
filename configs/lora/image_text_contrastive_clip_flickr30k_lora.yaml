@@ -1,0 +1,32 @@
+env_path: ".env"
+text_model_path: "FacebookAI/roberta-base"
+image_model_path: "google/vit-base-patch16-224"
+projection_dim: 768
+dataset_path: "Ritvik19/flickr30k"
+output_dir: "models/image_text_contrastive_clip_flickr30k_lora"
+
+# WandB settings
+wandb_project: "nanoformers"
+wandb_run_name: "image_text_contrastive_clip_flickr30k_lora"
+
+# Training settings
+batch_size: 64
+gradient_accumulation_steps: 1
+num_epochs: 25
+learning_rate: 5e-6
+lr_scheduler_type: "cosine"
+max_length: 128
+device: "cuda"
+
+# LoRA / QLoRA settings
+# Both text_encoder and image_encoder get LoRA applied independently.
+# The projection heads (text_projection, image_projection) are always trainable.
+peft:
+  use_lora: true
+  use_qlora: false
+  r: 128
+  alpha: 256
+  dropout: 0.05
+  target_modules: null      # auto-inferred for RoBERTa: [query, key, value]; ViT: [query, key, value]
+  modules_to_save: null
+  save_mode: "adapter"

@@ -49,8 +49,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 | Method | Description | Status |
 | :--- | :--- | :---: |
-| **LoRA** | Low-Rank Adaptation (`W + BA`), trainable low-rank adapters on a frozen base model | ⬜️ |
-| **QLoRA** | LoRA on top of a quantized base model (4-bit weights, bf16 adapters) | ⬜️ |
+| **LoRA** | Low-Rank Adaptation (`W + BA`), trainable low-rank adapters on a frozen base model — add a `peft:` block to any config (see [`configs/lora/`](configs/lora/)) | ✅ |
+| **QLoRA** | LoRA on top of a 4-bit NF4 quantized base model — set `use_qlora: true` on any LoRA config to enable; vLLM-RL uses native LoRA serving (`ENABLE_LORA=1`) so the base model stays in bf16 on the inference side | ✅ |
 
 ---
 
@@ -458,6 +458,9 @@ call the CLI directly with `python -m src.cli.train_grpo --config <path>`.
 ---
 
 ## 📰 Update Log
+
+### 2026-05-15
+- Implemented LoRA / QLoRA training for all training pipelines.
 
 ### 2026-05-06
 - Trained `Qwen/Qwen3-0.6B` on `Ritvik19/math-rl` dataset using GSPO resulting in 10% lift in pass@1 accuracy (average of 4) on `Ritvik19/math-rl`.

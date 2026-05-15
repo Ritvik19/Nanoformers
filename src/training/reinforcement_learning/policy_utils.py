@@ -47,6 +47,27 @@ def compute_per_token_log_probs_from_ref(ref_model, input_ids, attention_mask):
     return _per_token_log_probs(logits, input_ids, attention_mask)
 
 
+def compute_per_token_log_probs_from_ref_via_adapter(model, input_ids, attention_mask):
+    """Compute reference log-probs by temporarily disabling the LoRA adapter.
+
+    Equivalent to compute_per_token_log_probs_from_ref(ref_model, ...) but uses
+    the PEFT disable_adapter() context manager so no second frozen model copy is
+    needed.  Only valid when `model` is a PeftModel.
+    """
+    with torch.no_grad():
+        with model.disable_adapter():
+            with torch.cuda.amp.autocast(
+                enabled=torch.cuda.is_available(),
+                dtype=torch.bfloat16,
+            ):
+                logits = model(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    return_dict=True,
+                ).logits
+    return _per_token_log_probs(logits, input_ids, attention_mask)
+
+
 def compute_kl_penalty(policy_logps, ref_logps, mask):
     # First-order approximation:
     #   KL = (1/T) * sum_t mask_t * [log pi_theta(y_t) - log pi_ref(y_t)]
