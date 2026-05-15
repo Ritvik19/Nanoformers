@@ -1,0 +1,8 @@
+use_lora: true
+use_qlora: false
+r: 128
+alpha: 256
+dropout: 0.05
+target_modules: null
+modules_to_save: null
+save_mode: "adapter"

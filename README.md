@@ -49,8 +49,8 @@ It covers **self-supervised**, **supervised**, and **reinforcement learning** tr
 
 | Method | Description | Status |
 | :--- | :--- | :---: |
-| **LoRA** | Low-Rank Adaptation (`W + BA`), trainable low-rank adapters on a frozen base model — add a `peft:` block to any config (see [`configs/lora/`](configs/lora/)) | ✅ |
-| **QLoRA** | LoRA on top of a 4-bit NF4 quantized base model — set `use_qlora: true` on any LoRA config to enable; vLLM-RL uses native LoRA serving (`ENABLE_LORA=1`) so the base model stays in bf16 on the inference side | ✅ |
+| **LoRA** | Low-Rank Adaptation (`W + BA`), trainable low-rank adapters on a frozen base model — pass `--peft-config configs/peft/lora.yaml` to any training script | ✅ |
+| **QLoRA** | LoRA on top of a 4-bit NF4 quantized base model — pass `--peft-config configs/peft/qlora.yaml`; vLLM-RL uses native LoRA serving (`ENABLE_LORA=1`) so the base model stays in bf16 on the inference side | ✅ |
 
 ---
 
@@ -176,6 +176,31 @@ pip install -r requirements.txt
 ```
 
 ### Usage
+
+Every training script accepts two config arguments:
+
+| Flag | Required | Purpose |
+| :--- | :---: | :--- |
+| `--config` | Yes | Training config (model, data, hyperparams) |
+| `--peft-config` | No | PEFT config (LoRA / QLoRA). Omit for full fine-tuning. |
+
+When `--peft-config` is supplied the PEFT settings are merged into the
+training config under the `peft` key; when omitted the script defaults to
+full-parameter training. See [`configs/peft/`](configs/peft/) for ready-made
+PEFT configs.
+
+```bash
+# Full fine-tuning (default)
+python -m src.cli.train_ift --config configs/ift_qwen_gsm8k.yaml
+
+# LoRA
+python -m src.cli.train_ift --config configs/ift_qwen_gsm8k.yaml \
+    --peft-config configs/peft/lora.yaml
+
+# QLoRA
+python -m src.cli.train_ift --config configs/ift_qwen_gsm8k.yaml \
+    --peft-config configs/peft/qlora.yaml
+```
 
 #### Causal Language Modeling (CLM)
 
@@ -460,6 +485,7 @@ call the CLI directly with `python -m src.cli.train_grpo --config <path>`.
 ## 📰 Update Log
 
 ### 2026-05-15
+- Refactored PEFT configuration: training scripts now accept `--peft-config` as a separate argument (omit for full fine-tuning). Two ready-made PEFT configs live in [`configs/peft/`](configs/peft/) (`lora.yaml` and `qlora.yaml`); removed the per-task `configs/lora/` directory.
 - Implemented LoRA / QLoRA training for all training pipelines.
 
 ### 2026-05-06
